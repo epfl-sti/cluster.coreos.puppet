@@ -9,6 +9,7 @@ RUN apk upgrade --update --available && \
       ruby \
       util-linux \
       shadow \
+      ipmitool \
     && rm -f /var/cache/apk/* && \
     gem install -N \
       facter:'>= 2.4.3' \
