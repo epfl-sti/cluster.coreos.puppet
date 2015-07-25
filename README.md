@@ -1,22 +1,22 @@
 Puppet on CoreOS
 ================
 
-[![](https://badge.imagelayers.io/jumanjiman/puppet.svg)](https://imagelayers.io/?images=jumanjiman/puppet:latest 'View image size and layers')&nbsp;
-[![Circle CI](https://circleci.com/gh/jumanjihouse/puppet-on-coreos.png?circle-token=f9208a48c93c066eedc085afb8e79fd6d2f6c6a4)](https://circleci.com/gh/jumanjihouse/puppet-on-coreos/tree/master 'View CI builds')
+[![](https://badge.imagelayers.io/epflsti/puppet.svg)](https://imagelayers.io/?images=epflsti/puppet:latest 'View image size and layers')
 
-Project URL: https://github.com/jumanjihouse/puppet-on-coreos
+Project URL: https://github.com/epflsti/cluster.coreos.puppet
 
-Docker registry: https://registry.hub.docker.com/u/jumanjiman/puppet/
+Based on: https://github.com/jumanjihouse/puppet-on-coreos
+
+Docker registry: https://registry.hub.docker.com/u/epflsti/puppet/
 
 
 Overview
 --------
 
-Run Puppet inside a container such that it affects the state
+Run Puppet inside a container such that it may affect the state
 of the underlying CoreOS host.
 
-If you want to run Puppet Master in a container, see
-[my docker-puppet git repo](https://github.com/jumanjiman/docker-puppet).
+Support for collecting IPMI facts included.
 
 
 Wat? Why?
@@ -32,13 +32,13 @@ Cloud-init is fine for bootstrapping CoreOS hosts, but sometimes you want to:
 How-to
 ------
 
-Build images:
+Build image:
 
-    script/build
+    docker build -t epflsti/puppet .
 
-Run simple tests:
+Upload image:
 
-    script/test
+    docker push epflsti/puppet
 
 
 License
