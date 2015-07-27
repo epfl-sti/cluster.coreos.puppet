@@ -1,6 +1,6 @@
-# Class: epflsti_coreos::network
+# Class: epflsti_coreos::gateway
 #
-# Configure the CoreOS networking with Puppet, EPFLSTI-style.
+# Configure the default route with Puppet on CoreOS hosts, EPFLSTI-style.
 #
 # Puppet as a provisioning mechanism competes with CoreOS' own
 # cloud-init, and therefore we use it only in specific cases - Here,
@@ -28,7 +28,7 @@
 #
 # This module sets the default route and activates IPv4 forwarding on gateway
 # nodes (those that have $external_address set).
-class epflsti_coreos::network(
+class epflsti_coreos::gateway(
   $external_interface = "enp1s0f1",
   $external_address = undef,
   $external_gateway = undef,
