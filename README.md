@@ -1,2 +1,2 @@
-# custer.coreos.puppet.manifests
+# cluster.coreos.puppet.manifests
 Puppet configuration (manifests) to run a CoreOS cluster, EPFL-STI style
