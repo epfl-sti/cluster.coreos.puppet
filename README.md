@@ -39,11 +39,9 @@ Upload image:
 
     docker push epflsti/puppet
 
-Check out [`cluster.coreos.puppet.manifests`](https://github.com/epfl-sti/cluster.coreos.puppet.manifests) inside the [`cluster.foreman`](https://github.com/epfl-sti/cluster.foreman) Docker container:
+Run the image: done automatically as part of [cluster.foreman.community-templates](https://github.com/epfl-sti/cluster.foreman.community-templates)
 
-    docker exec -it puppetmaster.mysubdomain.mydomain.com /bin/bash
-    cd /etc/puppet/environments/production/modules
-    git checkout XXXTODOXXX
+Configure the Puppet master: see [cluster.coreos.puppet.manifests](https://github.com/epfl-sti/cluster.coreos.puppet.manifests)
 
 License
 -------
