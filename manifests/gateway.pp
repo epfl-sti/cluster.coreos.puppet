@@ -68,7 +68,7 @@ class epflsti_coreos::gateway(
     } ~> Exec["restart networkd in host"]
     exec { "Flush addresses on ${external_interface}":
       command => "/sbin/ip addr flush dev ${external_interface}",
-      onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q ."
+      onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q inet"
     }
     exec { "Disable default route through ${external_interface}":
       command => "/sbin/ip route del default dev ${external_interface}",
