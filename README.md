@@ -33,7 +33,7 @@ How-to
 
 Build image:
 
-    docker build -t epflsti/puppet docker/
+    docker build -t epflsti/puppet .
 
 Upload image:
 
