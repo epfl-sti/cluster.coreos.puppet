@@ -75,12 +75,12 @@ class epflsti_coreos::gateway(
     exec { "Disable gateway VIP":
       path => $path,
       command => "/sbin/ip addr del ${gateway_vip}/24",
-      unless => "! /sbin/ip addr show | grep -qw ${gateway_vip}"
+      onlyif => "/sbin/ip addr show | grep -qw ${gateway_vip}"
     } 
     exec { "Disable masquerading":
       path => $path,
       command => "/sbin/iptables -t nat -D POSTROUTING -o ${external_interface} -j MASQUERADE",
-      unless => "! /sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
+      onlyif => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
     } 
   }
 }
