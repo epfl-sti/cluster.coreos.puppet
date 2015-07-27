@@ -66,6 +66,10 @@ class epflsti_coreos::gateway(
             "/etc/systemd/network/50-${external_interface}-epflnet.network"]:
       ensure => "absent"
     } ~> Exec["restart networkd in host"]
+    exec { "Flush addresses on ${external_interface}":
+      command => "/sbin/ip addr flush dev ${external_interface}",
+      onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q ."
+    }
     exec { "Disable default route through ${external_interface}":
       command => "/sbin/ip route del default dev ${external_interface}",
       onlyif => "/sbin/ip route show dev ${external_interface} | grep -q ^default"
