@@ -23,10 +23,17 @@
 # [*external_netmask*]
 #   The netmask for the external network.
 #
-# [*gateway_vip*]
-#   To be set only on the router; enable that virtual IP (VIP).
+# [*is_gateway*]
+#   True iff this host should act as the gateway for the internal network
+#   (by setting up a gateway alias IP address at $::gateway_vip, and masquerading
+#   in iptables).
 #   TODO: this should be moved to a heartbeat rig. This not made persistent
 #   for that reason.
+#
+# === Global Variables:
+#
+# [*$::gateway_vip*]
+#   The IP address to use to set up the gateway if ${is_gateway} is true
 #
 # === Actions:
 #
@@ -37,7 +44,7 @@ class epflsti_coreos::gateway(
   $external_interface = "enp1s0f1",
   $external_gateway = undef,
   $external_netmask = undef,
-  $gateway_vip = undef
+  $is_gateway = undef
 ) {
   if ($external_address) {
     validate_string($external_gateway, $external_netmask)
@@ -76,11 +83,11 @@ class epflsti_coreos::gateway(
     }
   }
 
-  if ($gateway_vip) {
+  if ($is_gateway) {
     exec { "Enable gateway VIP":
       path => $path,
-      command => "/sbin/ip addr add ${gateway_vip}/24 dev ethbr4",
-      unless => "/sbin/ip addr show |grep -qw ${gateway_vip}"
+      command => "/sbin/ip addr add ${::gateway_vip}/24 dev ethbr4",
+      unless => "/sbin/ip addr show |grep -qw ${::gateway_vip}"
     } 
     exec { "Enable masquerading":
       path => $path,
@@ -90,8 +97,8 @@ class epflsti_coreos::gateway(
   } else {
     exec { "Disable gateway VIP":
       path => $path,
-      command => "/sbin/ip addr del ${gateway_vip}/24",
-      onlyif => "/sbin/ip addr show | grep -qw ${gateway_vip}"
+      command => "/sbin/ip addr del ${::gateway_vip}/24 dev ethbr4",
+      onlyif => "/sbin/ip addr show | grep -qw ${::gateway_vip}"
     } 
     exec { "Disable masquerading":
       path => $path,
