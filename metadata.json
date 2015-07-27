@@ -1,0 +1,21 @@
+{
+  "name": "epflsti-epflsti_coreos",
+  "version": "0.0.1",
+  "author": "domq",
+  "summary": "CoreOS configuration via Puppet",
+  "description": "CoreOS configuration via Puppet",
+  "license": "MIT License",
+  "project_page": "https://github.com/epfl-sti/cluster.coreos.puppet.manifests",
+  "issues_url": null,
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "CoreOS"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 4.6.0"
+    },
+  ]
+}
