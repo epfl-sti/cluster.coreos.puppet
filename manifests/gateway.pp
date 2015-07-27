@@ -10,8 +10,12 @@
 # === Parameters:
 #
 # [*external_address*]
-#   The fixed, presumably publicly routable IPv4 address that this host should
-#   respond to. If undef, $external_gateway and $external_netmask are ignored.
+#   The fixed, presumably publicly routable IPv4 address that this
+#   host should respond to. If undef, $external_interface,
+#   $external_gateway and $external_netmask are ignored.
+#
+# [*external_interface*]
+#   The physical that should have address $external_address.
 #
 # [*external_gateway*]
 #   IP address of the network gateway, as seen from the internal network
@@ -29,8 +33,8 @@
 # This module sets the default route and activates IPv4 forwarding on gateway
 # nodes (those that have $external_address set).
 class epflsti_coreos::gateway(
-  $external_interface = "enp1s0f1",
   $external_address = undef,
+  $external_interface = "enp1s0f1",
   $external_gateway = undef,
   $external_netmask = undef,
   $gateway_vip = undef
@@ -53,7 +57,10 @@ class epflsti_coreos::gateway(
       ensure => "link",
       target => "40-ethbr4-nogateway.opt-network"
     } ~> Exec["restart networkd in host"]
-
+    exec { "Disable default route through ethbr4":
+      command => "/sbin/ip route del default dev ethbr4",
+      onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
+    }
   } else {
     file { ["/etc/systemd/40-ethbr4-nogateway.network",
             "/etc/systemd/network/50-${external_interface}-epflnet.network"]:
