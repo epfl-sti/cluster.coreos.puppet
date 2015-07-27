@@ -47,7 +47,7 @@ class epflsti_coreos::gateway(
   if ($external_address) {
     file { "/etc/systemd/50-${external_interface}-epflnet.network":
       ensure => "present",
-      contents => template("epflsti_coreos/50-epflnet.network.erb")
+      content => template("epflsti_coreos/50-epflnet.network.erb")
     } ~> Exec["restart networkd in host"]
     file { "/etc/systemd/40-ethbr4-nogateway.network":
       ensure => "link",
