@@ -53,7 +53,7 @@ class epflsti_coreos::gateway(
       ensure => "present",
       content => template("epflsti_coreos/50-epflnet.network.erb")
     } ~> Exec["restart networkd in host"]
-    file { "/etc/systemd/40-ethbr4-nogateway.network":
+    file { "/etc/systemd/network/40-ethbr4-nogateway.network":
       ensure => "link",
       target => "40-ethbr4-nogateway.opt-network"
     } ~> Exec["restart networkd in host"]
@@ -62,7 +62,7 @@ class epflsti_coreos::gateway(
       onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
     }
   } else {
-    file { ["/etc/systemd/40-ethbr4-nogateway.network",
+    file { ["/etc/systemd/network/40-ethbr4-nogateway.network",
             "/etc/systemd/network/50-${external_interface}-epflnet.network"]:
       ensure => "absent"
     } ~> Exec["restart networkd in host"]
