@@ -26,7 +26,7 @@ At EPFL-STI, we [provision bare metal with Foreman](https://github.com/epfl-sti/
 
 Still, we have a need for Puppet agents on the hosts to:
 * populate the Foreman database and UI with facts, in particular the IPMI networking data (IP and MAC address of IPMI controller etc) which allows for one-click reinstalls (okay, more like five-click) from the Foreman Web UI;
-* manage static external IPs
+* manage static external IPs (including masquerading with iptables)
 
 How-to
 ------
