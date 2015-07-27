@@ -5,5 +5,5 @@ To check out [`cluster.coreos.puppet.manifests`](https://github.com/epfl-sti/clu
 
     docker exec -it puppetmaster.mysubdomain.mydomain.com /bin/bash
     cd /etc/puppet/environments/production/modules
-    git clone https://github.com/epfl-sti/cluster.coreos.puppet.git epflsti_coreos
+    git clone https://github.com/epfl-sti/cluster.coreos.puppet.manifests.git epflsti_coreos
 
