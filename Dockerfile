@@ -10,6 +10,7 @@ RUN apk upgrade --update --available && \
       util-linux \
       shadow \
       ipmitool \
+      dmidecode \
       iptables \
     && rm -f /var/cache/apk/* && \
     gem install -N \

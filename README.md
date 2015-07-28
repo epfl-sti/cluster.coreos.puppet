@@ -25,7 +25,7 @@ Why?
 At EPFL-STI, we [provision bare metal with Foreman](https://github.com/epfl-sti/cluster.foreman). We are currently [infatuated with CoreOS](https://github.com/epfl-sti/cluster.foreman.community-templates), which has its own configuration management philosophy based on [`cloud-config.yaml`](https://coreos.com/os/docs/latest/cloud-config.html), and [reinstalling a lot](https://coreos.com/using-coreos/updates/.
 
 Still, we have a need for Puppet agents on the hosts to:
-* populate the Foreman database and UI with facts, in particular the IPMI networking data (IP and MAC address of IPMI controller etc) which allows for one-click reinstalls (okay, more like five-click) from the Foreman Web UI;
+* populate the Foreman database and UI with facts, in particular the manufacturer data from dmidecode, and the IPMI networking data (IP and MAC address of IPMI controller etc).  The latter allows for one-click reinstalls (okay, more like five-click) from the Foreman Web UI;
 * manage static external IPs (including masquerading with iptables)
 
 How-to
