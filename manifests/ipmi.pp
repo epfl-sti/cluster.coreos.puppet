@@ -12,4 +12,5 @@ class epflsti_coreos::ipmi() {
       }
     }
     # TODO: auto-configure our XX8DTT's too (they have all been configured manually)
+  }
 }
