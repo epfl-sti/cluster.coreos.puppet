@@ -15,7 +15,7 @@ class epflsti_coreos::ipmi() {
       exec { "Empty IPMI bit bucket":
         path => $path,
         command => "/bin/false",
-        onlyif => "ipmitool sel clear"
+        unless => "ipmitool sel clear"
       }
     }
     # TODO: auto-configure our X8DTT's too (they have all been configured manually)
