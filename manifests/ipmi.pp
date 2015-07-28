@@ -3,7 +3,7 @@
 # Configure IPMI with a root password and so on.
 class epflsti_coreos::ipmi() {
   case $::boardproductname {
-    "XX7DBT": {
+    "X7DBT": {
       # Believe it or not, "ipmi=on" actually turns it off! "ipmi=zoinx" works.
       exec { "Set up IPMI remote access":
         command => "ipmitool lan set 1 auth ADMIN MD5 && ipmitool lan set 1 access on && ipmitool user set name 2 root && ipmitool user set password 2 ${::ipmi_root_password} && ipmitool channel setaccess 1 2 link=$activate ipmi=$activate callin=on privilege=4 && ipmitool user enable 2",
@@ -11,6 +11,6 @@ class epflsti_coreos::ipmi() {
         unless => "ipmitool channel getaccess 1 2|grep -q 'IPMI Messaging.*enabled'"
       }
     }
-    # TODO: auto-configure our XX8DTT's too (they have all been configured manually)
+    # TODO: auto-configure our X8DTT's too (they have all been configured manually)
   }
 }
