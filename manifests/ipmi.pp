@@ -13,9 +13,9 @@ class epflsti_coreos::ipmi() {
       # When the System Event Log (SEL) is full, we get a boot-time message
       # to the tune of: SEL full, press F1 to continue :-(
       exec { "Empty IPMI bit bucket":
-        command => "/bin/true",
         path => $path,
-        unless => "ipmitool sel clear"
+        command => "/bin/false",
+        onlyif => "ipmitool sel clear"
       }
     }
     # TODO: auto-configure our X8DTT's too (they have all been configured manually)
