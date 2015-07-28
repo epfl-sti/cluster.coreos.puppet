@@ -10,6 +10,13 @@ class epflsti_coreos::ipmi() {
         path => $path,
         unless => "ipmitool channel getaccess 1 2|grep -q 'IPMI Messaging.*enabled'"
       }
+      # When the System Event Log (SEL) is full, we get a boot-time message
+      # to the tune of: SEL full, press F1 to continue :-(
+      exec { "Empty IPMI bit bucket":
+        command => "/bin/true",
+        path => $path,
+        unless => "ipmitool sel clear"
+      }
     }
     # TODO: auto-configure our X8DTT's too (they have all been configured manually)
   }
