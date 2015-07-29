@@ -1,11 +1,19 @@
 # Class: epflsti_coreos::gateway
 #
-# Configure the default route with Puppet on CoreOS hosts, EPFLSTI-style.
+# Configure this host as a gateway in an EPFL-STI CoreOS cluster
 #
-# Puppet as a provisioning mechanism competes with CoreOS' own
-# cloud-init, and therefore we use it only in specific cases - Here,
-# for network configuration that ought to be independent from etcd for
-# robustness reasons.
+# This class is meant to be applied to machines that have their
+# secondary network interface physically attached to the public
+# Internet (the primary interface being reserved for the internal
+# network, so that even gateways may be controlled with IPMI). There
+# is no point in attaching this class to internal nodes, although it
+# doesn't hurt (or in fact, do anything) if $external_address and
+# $is_gateway are both left undefined (their default value).
+#
+# Each gateway host gets a dedicated public IP address. In addition,
+# one of the gateways is the *active gateway* and is set up for
+# outgoing traffic and NAT (see Actions: below).
+# 
 #
 # === Parameters:
 #
@@ -23,29 +31,39 @@
 # [*external_netmask*]
 #   The netmask for the external network.
 #
-# [*is_gateway*]
+# [*is_active*]
 #   True iff this host should act as the gateway for the internal network
 #   (by setting up a gateway alias IP address at $::gateway_vip, and masquerading
 #   in iptables).
-#   TODO: this should be moved to a heartbeat rig. This not made persistent
-#   for that reason.
+#   TODO: this should be moved to a heartbeat rig. The changes caused
+#   by this variable (see Actions: below) are not persistent for that
+#   reason.
 #
 # === Global Variables:
 #
 # [*$::gateway_vip*]
-#   The IP address to use to set up the gateway if ${is_gateway} is true
+#   The IP address that all internal nodes have set up as their default route
+#   at provisioning time. The gateway that ${is_active} sets up this IP
+#   as an alias for itself, and enables routing and masquerading.
 #
 # === Actions:
 #
-# This module sets the default route and activates IPv4 forwarding on gateway
-# nodes (those that have $external_address set).
+# If $external_address is set, this class overrides the network
+# configuration set up by cloud-config.yml at provisioning time thusly:
+#
+# * Configure $external_interface with $external_address/$external_netmask
+# * Change default route to point to $external_gateway
+
+# In addition, if $is_active is set, this class aliases the ethbr4
+# interface to $::gateway_vip and activates IPv4 masquerading through
+# $external_interface.
 class epflsti_coreos::gateway(
   $external_address = undef,
-  $external_interface = "enp1s0f1",
+  $external_interface = $::epflsti_coreos::gateway::params::external_interface,
   $external_gateway = undef,
   $external_netmask = undef,
-  $is_gateway = undef
-) {
+  $is_active = undef
+) inherits epflsti_coreos::gateway::private::params {
   if ($external_address) {
     validate_string($external_gateway, $external_netmask)
   }
@@ -83,7 +101,7 @@ class epflsti_coreos::gateway(
     }
   }
 
-  if ($is_gateway) {
+  if ($is_active) {
     exec { "Enable gateway VIP":
       path => $path,
       command => "/sbin/ip addr add ${::gateway_vip}/24 dev ethbr4",
