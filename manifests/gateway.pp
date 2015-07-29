@@ -59,13 +59,13 @@
 # $external_interface.
 class epflsti_coreos::gateway(
   $external_address = undef,
-  $external_interface = $::epflsti_coreos::gateway::params::external_interface,
+  $external_interface = $::epflsti_coreos::gateway::private::params::external_interface,
   $external_gateway = undef,
   $external_netmask = undef,
   $is_active = undef
 ) inherits epflsti_coreos::gateway::private::params {
   if ($external_address) {
-    validate_string($external_gateway, $external_netmask)
+    validate_string($external_interface, $external_gateway, $external_netmask)
   }
 
   exec { "restart networkd in host":
