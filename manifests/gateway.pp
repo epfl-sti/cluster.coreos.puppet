@@ -64,16 +64,15 @@ class epflsti_coreos::gateway(
   $external_netmask = undef,
   $is_active = undef
 ) inherits epflsti_coreos::gateway::private::params {
-  if ($external_address) {
-    validate_string($external_interface, $external_gateway, $external_netmask)
-  }
-
   exec { "restart networkd in host":
     command => "/usr/bin/systemctl restart systemd-networkd.service",
     refreshonly => true
   }
 
-  if ($external_address) {
+  if ($external_address and $external_interface and $external_netmask and
+      $external_gateway) {
+        validate_string($external_address, $external_interface,
+                        $external_netmask, $external_gateway)
     file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
       ensure => "present",
       content => template("epflsti_coreos/50-epflnet.network.erb")
