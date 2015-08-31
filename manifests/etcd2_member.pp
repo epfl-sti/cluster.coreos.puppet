@@ -20,5 +20,10 @@ class epflsti_coreos::etcd2_member(
   file { "/etc/systemd/system/etcd2.service.d/20-puppet.conf":
       ensure => "present",
       content => template("epflsti_coreos/20-etcd2.conf.erb")
+  } ~>
+  exec { "reload systemd configuration for new etcd2 quorum":
+    refreshonly => true,
+    path => $::path,
+    command => "systemctl daemon-reload && systemctl restart etcd2.service"
   }
 }
