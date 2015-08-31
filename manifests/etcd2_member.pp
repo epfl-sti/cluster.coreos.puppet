@@ -11,6 +11,7 @@ class epflsti_coreos::etcd2_member(
 ) {
   validate_array($member_ips)
   if (empty(intersection([$::ipaddress_ethbr4], $member_ips))) {
-    fail("My IP address ${::ipaddress_ethbr4} is not configured in Puppet as a member (members are: ${member_ips})")
+    $member_ips_text = join($member_ips, ", ")
+    fail("My IP address ${::ipaddress_ethbr4} is not configured in Puppet as a member (members are: ${member_ips_text})")
   }
 }
