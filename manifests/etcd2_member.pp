@@ -17,7 +17,7 @@ class epflsti_coreos::etcd2_member(
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
   } ->
-  file { "/etc/systemd/system/etcd2.service.d/20-puppet.conf":
+  file { "/etc/systemd/system/etcd2.service.d/20-cloudinit.conf":
       ensure => "present",
       content => template("epflsti_coreos/20-etcd2.conf.erb")
   } ~>
