@@ -10,8 +10,8 @@ class epflsti_coreos::etcd2_member(
   $members = undef,
 ) {
   validate_hash($members)
-  $members_as_text = join(values($members), ", ")
   if (empty(intersection([$::ipaddress_ethbr4], values($members)))) {
+    $members_as_text = join(values($members), ", ")
     fail("My IP address ${::ipaddress_ethbr4} is not configured in Puppet as a member (members are: ${members_as_text})")
   }
   file { "/etc/systemd/system/etcd2.service.d":
