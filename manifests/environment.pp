@@ -15,6 +15,6 @@ class epflsti_coreos::environment {
   exec { "restart Puppet from Puppet":
     command => "systemctl daemon-reload && systemctl restart puppet.service",
     path => $::path,
-    updateonly => true
+    refreshonly => true
   }
 }
