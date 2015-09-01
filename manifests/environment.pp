@@ -11,5 +11,9 @@ class epflsti_coreos::environment {
   file { "/etc/systemd/system/puppet.service":
     ensure => "present",
     content => template("epflsti_coreos/puppet.service.erb")
+  } ~>
+  exec { "restart Puppet from Puppet":
+    command => "systemctl daemon-reload && systemctl puppet.service restart",
+    path => $::path
   }
 }
