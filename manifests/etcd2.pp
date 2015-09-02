@@ -24,7 +24,8 @@
 #
 # etcd2 members manage their quorum by themselves; Puppet can only
 # *prepare* a new quorum member (i.e. set --initial-cluster and
-# --initial-cluster-state as per second step of § "Add a New Member",
+# --initial-cluster-state as per second step of paragraph "Add a New
+# Member",
 # https://github.com/coreos/etcd/blob/master/Documentation/runtime-configuration.md).
 # The rest of that doc explains how to complete the change (by writing
 # into the etcd2 data store, which causes the master to start sending
