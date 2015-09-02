@@ -38,7 +38,7 @@ class epflsti_coreos::etcd2(
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
   } ->
-  file { "/run/systemd/system/etcd2.service.d/20-cloudinit.conf":
+  file { "/opt/root/run/systemd/system/etcd2.service.d/20-cloudinit.conf":
     # Created at install time by a previous version of cluster.foreman.community-templates
     ensure => "absent"
   } ->
