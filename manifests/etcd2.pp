@@ -38,6 +38,10 @@ class epflsti_coreos::etcd2(
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
   } ->
+  file { "/run/systemd/system/etcd2.service.d/20-cloudinit.conf":
+    # Created at install time by a previous version of cluster.foreman.community-templates
+    ensure => "absent"
+  } ->
   file { "/etc/systemd/system/etcd2.service.d/20-puppet.conf":
     ensure => "present",
     content => template("epflsti_coreos/20-etcd2.conf.erb")
@@ -45,6 +49,7 @@ class epflsti_coreos::etcd2(
   exec { "reload systemd configuration for new etcd2 quorum":
     refreshonly => true,
     path => $::path,
-    command => "systemctl daemon-reload && systemctl restart etcd2.service"
+    command => "systemctl daemon-reload && systemctl enable etcd2.service && systemctl restart etcd2.service"
   }
+
 }
