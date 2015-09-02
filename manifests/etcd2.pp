@@ -11,7 +11,7 @@
 #
 # === Parameters:
 #
-# [*$::members*]
+# [*members*]
 #   A dict associating etcd2 quorum member names with their
 #   peer-advertised URLs.
 #
