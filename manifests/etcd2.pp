@@ -45,7 +45,7 @@ class epflsti_coreos::etcd2(
   exec { "reload systemd configuration and start etcd2":
     refreshonly => true,
     path => $::path,
-    command => "systemctl daemon-reload && systemctl enable etcd2.service && systemctl restart etcd2.service"
+    command => "systemctl daemon-reload && systemctl restart etcd2.service"
   }
 
   # ONE CYCLE ONLY: get rid of this file, created at install time by a
