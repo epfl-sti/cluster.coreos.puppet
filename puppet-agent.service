@@ -1,0 +1,18 @@
+;; Run puppet agent on all nodes of an EPFL-STI cluster.
+;; Usage:
+;;   fleetctl destroy puppet-agent.service
+;;   fleetctl start puppet-agent.service
+
+[Unit]
+Description=Run Puppet agent now
+
+After=puppet.service
+Requires=puppet.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec -i puppet.service puppet agent -t
+SuccessExitStatus=0 2
+
+[X-Fleet]
+Global=true
