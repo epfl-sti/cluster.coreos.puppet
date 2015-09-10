@@ -49,7 +49,7 @@ class epflsti_coreos::hostvars(
       content => template("epflsti_coreos/50-fleet-metadata.conf.erb")
     } ~>
     exec { "restart fleet in host":
-      command => "/usr/bin/systemctl restart fleet.service",
+      command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart fleet.service",
       refreshonly => true
     }
 }
