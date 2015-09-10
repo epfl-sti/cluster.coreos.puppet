@@ -16,7 +16,7 @@
 class epflsti_coreos::hostvars(
   $ups_hosts = [],
 ) {
-  $has_ups = member($::hostname, $ups_hosts)
+  $has_ups = member($ups_hosts, $::hostname)
 
   # Custom facts
   file { "/etc/facter":
