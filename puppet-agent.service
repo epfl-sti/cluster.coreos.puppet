@@ -12,6 +12,7 @@ Requires=puppet.service
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/docker exec -i puppet.service puppet agent -t
+SuccessExitStatus=0 2
 
 [X-Fleet]
 Global=true
