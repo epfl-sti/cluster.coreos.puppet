@@ -1,10 +1,14 @@
 # Configure things that change depending on the host.
 #
-# This class is intended to be loaded on all nodes
+# This class is intended to be loaded on all nodes.
+#
 # === Parameters:
 #
 # [*ups_hosts*]
 #   A list of short hostnames that have uninterruptible power plugged into them.
+#
+# [*etcd_region*]
+#   The "region=" metadata for fleet
 #
 # === Actions:
 #
@@ -15,6 +19,7 @@
 
 class epflsti_coreos::hostvars(
   $ups_hosts = [],
+  $etcd_region = undef
 ) {
   $has_ups = member($ups_hosts, $::hostname)
 
@@ -30,9 +35,21 @@ class epflsti_coreos::hostvars(
     content => template("epflsti_coreos/facts-epflsti.txt.erb")
   }
 
-  # Maintain /etc/environment from facts
+  # Maintain /etc/environment for unit files to source host-specific data from
   file { "/opt/root/etc/environment":
       ensure => "present",
       content => template("epflsti_coreos/environment.erb")
   }
+
+    file { "/etc/systemd/system/fleet.service.d":
+      ensure => "directory"
+    } ->
+    file { "/etc/systemd/system/fleet.service.d/50-metadata.conf":
+      ensure => "present",
+      content => template("epflsti_coreos/50-fleet-metadata.conf.erb")
+    } ~>
+    exec { "restart fleet in host":
+      command => "/usr/bin/systemctl restart fleet.service",
+      refreshonly => true
+    }
 }
