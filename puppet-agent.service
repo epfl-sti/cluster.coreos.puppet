@@ -1,7 +1,7 @@
 ;; Run puppet agent on all nodes of an EPFL-STI cluster.
 ;; Usage:
-;;   fleetctl start puppet-agent.service
 ;;   fleetctl destroy puppet-agent.service
+;;   fleetctl start puppet-agent.service
 
 [Unit]
 Description=Run Puppet agent now
