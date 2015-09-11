@@ -21,27 +21,15 @@ class epflsti_coreos::hostvars(
   $ups_hosts = [],
   $etcd_region = undef
 ) {
-  $has_ups = member($ups_hosts, $::hostname)
+    $has_ups = member($ups_hosts, $::hostname)
 
-  # Maintain /etc/environment for unit files to source host-specific data from
-  file { "/opt/root/etc/environment":
-      ensure => "present",
-      content => template("epflsti_coreos/environment.erb"),
-      # First Puppet run (at install time, before reboot) will only create this file.
-      tag => "bootstrap"
-  }
-
-  # Custom facts
-  file { "/etc/facter":
-    ensure => "directory",
-  } ->
-  file { "/etc/facter/facts.d":
-    ensure => "directory",
-  } ->
-  file { "/etc/facter/facts.d/epflsti.txt":
-    ensure => "present",
-    content => template("epflsti_coreos/facts-epflsti.txt.erb"),
-  }
+    # Maintain /etc/environment for unit files to source host-specific data from
+    file { "/opt/root/etc/environment":
+        ensure => "present",
+        content => template("epflsti_coreos/environment.erb"),
+        # First Puppet run (at install time, before reboot) will only create this file.
+        tag => "bootstrap"
+    }
 
     file { "/etc/systemd/system/fleet.service.d":
       ensure => "directory"
