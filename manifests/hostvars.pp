@@ -25,20 +25,24 @@ class epflsti_coreos::hostvars(
 
   # Custom facts
   file { "/etc/facter":
-    ensure => "directory"
+    ensure => "directory",
+    tag => "bootstrap"
   } ->
   file { "/etc/facter/facts.d":
-    ensure => "directory"
+    ensure => "directory",
+    tag => "bootstrap"
   } ->
   file { "/etc/facter/facts.d/epflsti.txt":
     ensure => "present",
-    content => template("epflsti_coreos/facts-epflsti.txt.erb")
+    content => template("epflsti_coreos/facts-epflsti.txt.erb"),
+    tag => "bootstrap"
   }
 
   # Maintain /etc/environment for unit files to source host-specific data from
   file { "/opt/root/etc/environment":
       ensure => "present",
-      content => template("epflsti_coreos/environment.erb")
+      content => template("epflsti_coreos/environment.erb"),
+      tag => "bootstrap"
   }
 
     file { "/etc/systemd/system/fleet.service.d":
