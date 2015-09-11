@@ -17,9 +17,9 @@
 #
 # === Actions:
 #
-# Update /home/core/.ssh/authorized_keys.d/coreos-cloudinit
+# Update /home/core/.ssh/authorized_keys
 class epflsti_coreos::ssh {
-  file { "/opt/root/home/core/.ssh/authorized_keys.d/coreos-cloudinit":
+  file { "/opt/root/home/core/.ssh/authorized_keys":
     ensure => "present",
     content => template("epflsti_coreos/ssh_authorized_keys.erb")
   }
