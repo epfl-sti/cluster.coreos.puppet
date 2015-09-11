@@ -1,1 +1,1 @@
-<% @host.params['ssh_authorized_keys'].split(',').map(&:strip).each do |ssh_key| -%>
+<%= @host.params['ssh_authorized_keys'].split(',').map(&:strip).each do |ssh_key| -%>
