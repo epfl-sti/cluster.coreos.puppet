@@ -56,7 +56,7 @@ class epflsti_coreos::etcd2(
     exec { "restart desynched proxy":
       path => $::path,
       command => "systemctl stop etcd2.service && rm -rf /opt/root/var/lib/etcd2/proxy && systemctl start etcd2.service",
-      onlyif => "etcdctl cluster-health |grep 'zero endpoints'"
+      onlyif => "/opt/root/bin/etcdctl cluster-health |grep 'zero endpoints'"
     }
   }
 }
