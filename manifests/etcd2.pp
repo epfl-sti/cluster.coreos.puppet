@@ -34,6 +34,9 @@ class epflsti_coreos::etcd2(
   $members = undef,
 ) {
   validate_hash($members)
+
+  $is_proxy = empty(intersection([$::ipaddress], values($members)))
+
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
   } ->
@@ -47,7 +50,6 @@ class epflsti_coreos::etcd2(
     command => "systemctl daemon-reload && systemctl restart etcd2.service"
   }
 
-  $is_proxy = empty(intersection([$::ipaddress], values($members)))
   if ($is_proxy) {
     # Poor man's monitoring for proxies, to work around
     # https://groups.google.com/d/msg/coreos-user/OuqvJIRAtho/VJ0NMo5BAgAJ
