@@ -34,7 +34,6 @@ class epflsti_coreos::etcd2(
   $members = undef,
 ) {
   validate_hash($members)
-  $is_proxy = empty(intersection([$::ipaddress], values($members)))
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
   } ->
@@ -46,5 +45,16 @@ class epflsti_coreos::etcd2(
     refreshonly => true,
     path => $::path,
     command => "systemctl daemon-reload && systemctl restart etcd2.service"
+  }
+
+  $is_proxy = empty(intersection([$::ipaddress], values($members)))
+  if ($is_proxy) {
+    # Poor man's monitoring for proxies, to work around
+    # https://groups.google.com/d/msg/coreos-user/OuqvJIRAtho/VJ0NMo5BAgAJ
+    exec { "restart desynched proxy":
+      path => $::path,
+      command => "systemctl stop etcd2.service && rm -rf /opt/root/var/lib/etcd2/proxy && systemctl start etcd2.service",
+      onlyif => "etcdctl cluster-health |grep 'zero endpoints'"
+    }
   }
 }
