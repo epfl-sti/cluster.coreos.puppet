@@ -47,10 +47,4 @@ class epflsti_coreos::etcd2(
     path => $::path,
     command => "systemctl daemon-reload && systemctl restart etcd2.service"
   }
-
-  # ONE CYCLE ONLY: get rid of this file, created at install time by a
-  # previous version of cluster.foreman.community-templates
-  file { "/opt/root/run/systemd/system/etcd2.service.d/20-cloudinit.conf":
-    ensure => "absent"
-  } ~> Exec["reload systemd configuration and start etcd2"]
 }
