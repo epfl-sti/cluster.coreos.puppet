@@ -1,13 +1,13 @@
+# Class: epflsti_coreos::tenant_networking
+#
+# Configure tenant IPv6-only networking.
+#
+# One IPv6 subnet is assigned per tenant, where they can do whatever they please.
+# One bridge is set up per tenant on each host.
+#
 class epflsti_coreos::tenant_networking() {
-  define epflsti_coreos::tenant_networking::bridge(
-    String $ipv6_subnet,
-    String $ipv6_netmask = "80"
-  ) {
-    file { "/etc/systemd/network/ethbr-${name}.netdev":
-      ensure => "present",
-      content => inline_template("[NetDev]\nName=ethbr-${name}\nKind=bridge\n")
-    }
+  include epflsti_coreos::tenant_networking::tenant
+  epflsti_coreos::tenant_networking::tenant { "core-consul":
+    $ipv6_subnet => "2001:620:61e:0101:0000::/80"
   }
-
-  epflsti_coreos::tenant_networking::bridge("core-consul")
 }
