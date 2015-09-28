@@ -6,8 +6,8 @@
 # One bridge is set up per tenant on each host.
 #
 class epflsti_coreos::tenant_networking() {
-  include epflsti_coreos::tenant_networking::tenant
-  epflsti_coreos::tenant_networking::tenant { "core-consul":
-    ipv6_subnet => "2001:620:61e:0101:0000::/80"
+  include epflsti_coreos::tenant_networking::private
+  epflsti_coreos::tenant_networking::private::tenant { "core-consul":
+        ipv6_subnet => "2001:620:61e:0101:0000::/80"
   }
 }
