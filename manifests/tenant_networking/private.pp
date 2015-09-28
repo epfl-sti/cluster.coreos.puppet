@@ -7,9 +7,9 @@ class epflsti_coreos::tenant_networking::private {
     validate_slength($br_name, 15)
     validate_string($ipv6_subnet)
 
-    file { "/etc/systemd/network/ethbr-${name}.netdev":
+    file { "/etc/systemd/network/ethbr-${br_name}.netdev":
       ensure => "present",
-      content => inline_template("[NetDev]\nName=ethbr-${name}\nKind=bridge\n")
+      content => inline_template("[NetDev]\nName=ethbr-${br_name}\nKind=bridge\n")
     } ~> Exec["restart networkd for tenant_networking"]
   }
 
