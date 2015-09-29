@@ -1,12 +1,12 @@
 Facter.add('coreos_cloudconfig_provision_version') do
   setcode do
-    Facter::Core::Execution.exec("sed -ne '/provision.erb \$Id:/p' < /etc/coreos/cloud-config.yml | awk '{print $4}'")
+    Facter::Core::Execution.exec("sed -ne '/provision.erb \$Id:/p' < /etc/coreos/epflsti-versions | awk '{print $4}'")
   end
 end
 
 Facter.add('coreos_cloudconfig_snippet_version') do
   setcode do
-    Facter::Core::Execution.exec("sed -ne '/coreos_cloudconfig.erb \$Id:/p' < /etc/coreos/cloud-config.yml | awk '{print $4}'")
+    Facter::Core::Execution.exec("sed -ne '/install.sh \$Id:/p' < /etc/coreos/epflsti-versions | awk '{print $4}'")
   end
 end
 
