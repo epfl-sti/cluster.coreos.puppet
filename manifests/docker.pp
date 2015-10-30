@@ -9,6 +9,9 @@
 #
 
 class epflsti_coreos::docker() {
+  file { "/etc/systemd/system/docker.service.d":
+    ensure => "directory"
+  } ->
   file { "/etc/systemd/system/docker.service.d/50-insecure-private-registry.conf":
       ensure => "present",
       content => template("epflsti_coreos/50-insecure-private-registry.conf.erb")
