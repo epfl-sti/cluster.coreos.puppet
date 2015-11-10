@@ -13,11 +13,16 @@ class epflsti_coreos::docker() {
     ensure => "directory"
   } ->
   file { "/etc/systemd/system/docker.service.d/50-insecure-private-registry.conf":
-      ensure => "present",
-      content => template("epflsti_coreos/50-insecure-private-registry.conf.erb")
-    } ~>
+    ensure => "present",
+    content => template("epflsti_coreos/50-insecure-private-registry.conf.erb"),
+    alias => "coreos-docker-private-registry-config"
+  }
+  if ($::lifecycle_stage != "bootstrap") {
     exec { "restart docker in host":
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart docker.service",
-      refreshonly => true
+      path => $::path,
+      refreshonly => true,
+      after => File["coreos-docker-private-registry-config"]
     }  
+  }
 }
