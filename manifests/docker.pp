@@ -22,7 +22,7 @@ class epflsti_coreos::docker() {
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart docker.service",
       path => $::path,
       refreshonly => true,
-      after => File["coreos-docker-private-registry-config"]
+      subscribe => File["coreos-docker-private-registry-config"]
     }  
   }
 }
