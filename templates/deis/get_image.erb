@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# usage: get_image <component_path>
+IMAGE=`etcdctl get $1/image 2>/dev/null`
+
+# if no image was set in etcd, we use the default plus the release string
+if [ $? -ne 0 ]; then
+  RELEASE=`etcdctl get /deis/platform/version 2>/dev/null`
+
+  # if no release was set in etcd, use the default provisioned with the server
+  if [ $? -ne 0 ]; then
+    source /etc/deis-release
+    RELEASE=$DEIS_RELEASE
+  fi
+
+  IMAGE=$1:$RELEASE
+fi
+
+# remove leading slash
+echo ${IMAGE#/}

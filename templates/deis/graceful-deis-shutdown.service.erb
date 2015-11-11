@@ -1,0 +1,14 @@
+[Unit]
+Description=Clean up
+DefaultDependencies=no
+After=fleet.service etcd2.service docker.service docker.socket deis-store-admin.service deis-store-daemon.service deis-store-volume.service deis-store-monitor.service
+Requires=fleet.service etcd2.service deis-store-admin.service deis-store-daemon.service deis-store-volume.service docker.service docker.socket deis-store-monitor.service
+
+[Install]
+WantedBy=shutdown.target halt.target reboot.target
+
+[Service]
+ExecStop=/opt/bin/deis-graceful-shutdown --really
+Type=oneshot
+TimeoutSec=1200
+RemainAfterExit=yes
