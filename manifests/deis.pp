@@ -32,10 +32,11 @@ class epflsti_coreos::deis() {
     }
   }
 
-  epflsti_coreos::deis::opt_bin_script(
+  opt_bin_script {
     ["wupiao", "download-k8s-binary", "deis-graceful-shutdown",
-     "scheduler-policy.json", "deis-debug-logs"])
-  epflsti_coreos::deis::run_deis_bin_script(["get_image", "preseed"])
+     "scheduler-policy.json", "deis-debug-logs"]
+  }
+  run_deis_bin_script { ["get_image", "preseed"] }
 
   file { "${rootpath}/etc/systemd/graceful-deis-shutdown.service":
     content => template('epflsti_coreos/deis/graceful-deis-shutdown.service.erb'),
