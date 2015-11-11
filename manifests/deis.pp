@@ -8,7 +8,7 @@
 # got CoreOS to bootstrap in our own way, we only want to keep the pieces
 # that install Deis itself on top.
 
-class epflsti_coreos::deis(){
+class epflsti_coreos::deis() {
   include ::systemd
 
   $rootpath = "/opt/root"
@@ -22,12 +22,14 @@ class epflsti_coreos::deis(){
       mode => "0755",
       content => template("epflsti_coreos/deis/${name}.erb"),
       require => File["${rootpath}/opt/bin"]
+    }
   }
   define run_deis_bin_script() {
     file { "${rootpath}/run/deis/bin/${name}":
       mode => "0755",
       content => template("epflsti_coreos/deis/${name}.erb"),
       require => File["${rootpath}/run/deis/bin"]
+    }
   }
 
   opt_bin_script(["wupiao", "download-k8s-binary", "deis-graceful-shutdown",
