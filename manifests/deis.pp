@@ -11,24 +11,24 @@
 class epflsti_coreos::deis() {
   include ::systemd
 
-  $rootpath = "/media/root"
+  $rootpath = "/opt/root"
   file { ["${rootpath}/opt", "${rootpath}/opt/bin",
           "${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
     ensure => "directory",
   }
 
   define opt_bin_script() {
-    file { "${rootpath}/opt/bin/${name}":
+    file { "${::epflsti_coreos::deis::rootpath}/opt/bin/${name}":
       mode => "0755",
       content => template("epflsti_coreos/deis/${name}.erb"),
-      require => File["${rootpath}/opt/bin"]
+      require => File["${::epflsti_coreos::deis::rootpath}/opt/bin"]
     }
   }
   define run_deis_bin_script() {
-    file { "${rootpath}/run/deis/bin/${name}":
+    file { "${::epflsti_coreos::deis::rootpath}/run/deis/bin/${name}":
       mode => "0755",
       content => template("epflsti_coreos/deis/${name}.erb"),
-      require => File["${rootpath}/run/deis/bin"]
+      require => File["${::epflsti_coreos::deis::rootpath}/run/deis/bin"]
     }
   }
 
