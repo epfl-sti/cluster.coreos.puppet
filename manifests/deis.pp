@@ -12,8 +12,7 @@ class epflsti_coreos::deis() {
   include ::systemd
 
   $rootpath = "/opt/root"
-  file { ["${rootpath}/opt", "${rootpath}/opt/bin",
-          "${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
+  file { ["${rootpath}/opt", "${rootpath}/opt/bin"] }
     ensure => "directory",
   }
 
@@ -24,19 +23,25 @@ class epflsti_coreos::deis() {
       require => File["${::epflsti_coreos::deis::rootpath}/opt/bin"]
     }
   }
-  define run_deis_bin_script() {
-    file { "${::epflsti_coreos::deis::rootpath}/run/deis/bin/${name}":
-      mode => "0755",
-      content => template("epflsti_coreos/deis/${name}.erb"),
-      require => File["${::epflsti_coreos::deis::rootpath}/run/deis/bin"]
-    }
-  }
 
   opt_bin_script {
     ["wupiao", "download-k8s-binary", "deis-graceful-shutdown",
      "scheduler-policy.json", "deis-debug-logs"]:
   }
-  run_deis_bin_script { ["get_image", "preseed"]: }
+
+  if ($::lifecycle_stage != "bootstrap") {
+    file { ["${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
+      ensure => "directory",
+    }
+    define run_deis_bin_script() {
+      file { "${::epflsti_coreos::deis::rootpath}/run/deis/bin/${name}":
+        mode => "0755",
+        content => template("epflsti_coreos/deis/${name}.erb"),
+        require => File["${::epflsti_coreos::deis::rootpath}/run/deis/bin"]
+      }
+    }
+    run_deis_bin_script { ["get_image", "preseed"]: }
+  }
 
   file { "${rootpath}/etc/systemd/graceful-deis-shutdown.service":
     content => template('epflsti_coreos/deis/graceful-deis-shutdown.service.erb'),
