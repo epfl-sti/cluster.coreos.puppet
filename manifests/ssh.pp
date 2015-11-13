@@ -17,10 +17,17 @@
 #
 # === Actions:
 #
-# Update /home/core/.ssh/authorized_keys
+# * Update /home/core/.ssh/authorized_keys
+# * Set sane /etc/ssh/sshd.conf
+#
 class epflsti_coreos::ssh {
-  file { "/opt/root/home/core/.ssh/authorized_keys":
+  $rootpath = "/opt/root"
+  file { "${rootpath}/home/core/.ssh/authorized_keys":
     ensure => "present",
     content => template("epflsti_coreos/ssh_authorized_keys.erb")
+  }
+  file { "${rootpath}/etc/ssh/ssh_config":
+    ensure => "file",
+    content => template("epflsti_coreos/ssh_config.erb")
   }
 }
