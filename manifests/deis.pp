@@ -11,7 +11,7 @@
 class epflsti_coreos::deis() {
   include ::systemd
 
-  $rootpath = "/opt/root"
+  $rootpath = "/media/root"
   file { ["${rootpath}/opt", "${rootpath}/opt/bin",
           "${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
     ensure => "directory",
