@@ -48,7 +48,7 @@ class epflsti_coreos::deis() {
     path => $::path,
     require => File["${rootpath}/opt/bin"]
   } ~> exec { "create /etc/deis-release":
-    command => "(echo -n \"DEIS_RELEASE=v\"; ${rootpath}/opt/bin/deisctl) --version > ${rootpath}/etc/deis-release",
+    command => "/bin/sh -c 'echo -n \"DEIS_RELEASE=v\"; ${rootpath}/opt/bin/deisctl --version' > ${rootpath}/etc/deis-release",
     path => $::path,
     refreshonly => true
   }
