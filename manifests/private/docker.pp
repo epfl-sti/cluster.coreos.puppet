@@ -1,4 +1,4 @@
-# Class: epflsti_coreos::docker
+# Class: epflsti_coreos::private::docker
 #
 # Special docker tweaks for EPFL-STI clusters
 #
@@ -8,7 +8,7 @@
 #   on the command line of all dockerd's
 #
 
-class epflsti_coreos::docker() {
+class epflsti_coreos::private::docker() {
   file { "/etc/systemd/system/docker.service.d":
     ensure => "directory"
   } ->

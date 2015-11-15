@@ -13,6 +13,9 @@ class epflsti_coreos::private::systemd {
     } elsif ($name =~ /\.(network|netdev)$/) {
       $_kind = "network"
       $_subdir = "network"
+    } elsif ($name =~ /\.(socket)$/) {
+      $_kind = "socket"
+      $_subdir = "system"
     } else {
       fail("Cannot determine unit type for ${name}")
     }

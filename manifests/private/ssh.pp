@@ -1,4 +1,4 @@
-# Class: epflsti_coreos::ssh
+# Class: epflsti_coreos::private::ssh
 #
 # Configure ssh access to bare metal.
 #
@@ -20,7 +20,7 @@
 # * Update /home/core/.ssh/authorized_keys
 # * Set sane /etc/ssh/ssh_config
 #
-class epflsti_coreos::ssh {
+class epflsti_coreos::private::ssh {
   $rootpath = "/opt/root"
   file { "${rootpath}/home/core/.ssh/authorized_keys":
     ensure => "present",

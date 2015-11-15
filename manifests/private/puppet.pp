@@ -1,4 +1,4 @@
-# Class: epflsti_coreos::puppet
+# Class: epflsti_coreos::private::puppet
 #
 # Install or update Puppet-in-Docker.
 #
@@ -17,7 +17,7 @@ class epflsti_coreos::private::puppet(
     install_sh_version => $::install_sh_version
   }
 
-  epflsti_coreos::private::systemd::unit { "puppet.service":
+  systemd::unit { "puppet.service":
     content => template('epflsti_coreos/puppet.service.erb')
   }
 }

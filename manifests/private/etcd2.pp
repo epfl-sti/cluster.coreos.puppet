@@ -1,4 +1,4 @@
-# Class: epflsti_coreos::etcd2
+# Class: epflsti_coreos::private::etcd2
 #
 # Configure etcd2 either as quorum member or proxy.
 #
