@@ -32,5 +32,6 @@ class epflsti_coreos(
 
   if ($::lifecycle_stage == "production") {
     class { "epflsti_coreos::ipmi": }
+    class { "epflsti_coreos::private::comfort": }
   }
 }
