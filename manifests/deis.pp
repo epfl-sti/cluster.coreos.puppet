@@ -9,7 +9,7 @@
 # that install Deis itself on top.
 
 class epflsti_coreos::deis() {
-  include ::systemd
+  include ::epflsti_coreos::private::systemd
 
   $rootpath = "/opt/root"
   file { ["${rootpath}/opt", "${rootpath}/opt/bin"] }
@@ -43,9 +43,10 @@ class epflsti_coreos::deis() {
     run_deis_bin_script { ["get_image", "preseed"]: }
   }
 
-  file { "${rootpath}/etc/systemd/graceful-deis-shutdown.service":
+  epflsti_coreos::private::systemd::unit { "graceful-deis-shutdown.service":
     content => template('epflsti_coreos/deis/graceful-deis-shutdown.service.erb'),
-  } -> Exec["systemctl-daemon-reload"]
+    start => false
+  }
 
   exec { "install deisctl":
     creates => "${rootpath}/opt/bin/deisctl",
