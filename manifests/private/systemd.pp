@@ -19,7 +19,7 @@ define unit (
     }  
   }
 
-  if ($start && $::lifecycle_stage == "production") {
+  if ($start and $::lifecycle_stage == "production") {
     exec { "Restarting ${name} in systemd":
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl reload-or-restart ${name}",
       path => $::path,
