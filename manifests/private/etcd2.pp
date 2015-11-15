@@ -33,6 +33,12 @@
 class epflsti_coreos::private::etcd2(
   $members = undef,
 ) {
+  include ::epflsti_coreos::private::systemd
+
+  systemd::unit { "etcd2.service":
+    enable => true
+  }
+
   validate_hash($members)
 
   $is_proxy = empty(intersection([$::ipaddress], values($members)))
