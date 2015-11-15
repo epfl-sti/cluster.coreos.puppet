@@ -14,7 +14,7 @@ class epflsti_coreos::private::docker() {
   } ->
   file { "/etc/systemd/system/docker.service.d/50-insecure-private-registry.conf":
     ensure => "present",
-    content => template("epflsti_coreos/50-insecure-private-registry.conf.erb"),
+    content => template("epflsti_coreos/docker.conf.erb"),
     alias => "coreos-docker-private-registry-config"
   }
   if ($::lifecycle_stage != "bootstrap") {
