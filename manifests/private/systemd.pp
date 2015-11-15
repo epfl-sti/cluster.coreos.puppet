@@ -1,9 +1,9 @@
 # Library for dealing with systemd in EPFL-STI clusters
 
 define unit (
-  enable => true,
-  start => true,
-  content => undef
+  $enable = true,
+  $start = true,
+  $content = undef
 ) {
 
   file { "/etc/systemd/system/${name}":
