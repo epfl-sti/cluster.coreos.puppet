@@ -14,6 +14,7 @@ class epflsti_coreos(
 
   class { "epflsti_coreos::private::ssh": }
   class { "epflsti_coreos::private::puppet": }
+  class { "epflsti_coreos::private::docker": }
   class { "epflsti_coreos::private::hostvars":
     ups_hosts => $ups_hosts,
     etcd_region => $etcd_region
