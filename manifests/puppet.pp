@@ -6,6 +6,7 @@
 # bootstrap run before reboot. See ../README.md for details.
 class epflsti_coreos::puppet() {
   $rootpath = "/opt/root"
+  include ::epflsti_coreos::private::systemd
 
   $facts = {
     lifecycle_stage => "production",
@@ -14,7 +15,7 @@ class epflsti_coreos::puppet() {
     install_sh_version => $::install_sh_version
   }
 
-  file { "${rootpath}/etc/systemd/system/puppet.service":
-    content => template('epflsti_coreos/puppet.service.erb'),
+  epflsti_coreos::private::systemd::unit { "puppet.service":
+    content => template('epflsti_coreos/puppet.service.erb')
   }
 }
