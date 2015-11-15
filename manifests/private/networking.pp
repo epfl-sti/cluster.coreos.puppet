@@ -29,10 +29,6 @@ class epflsti_coreos::private::networking {
     content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
-  fail("A
-
-B")
-
   systemd::unit { "00-${_primary_interface}.network":
     content => "# Network configuration of ${_primary_interface}
 #
