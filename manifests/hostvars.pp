@@ -21,25 +21,28 @@ class epflsti_coreos::hostvars(
   $ups_hosts = [],
   $etcd_region = undef
 ) {
+    validate_array($ups_hosts)
+    validate_string($etcd_region)
+
+    $rootpath = "/opt/root"
     $has_ups = member($ups_hosts, $::hostname)
 
     # Maintain /etc/environment for unit files to source host-specific data from
-    file { "/opt/root/etc/environment":
+    file { "$rootpath/etc/environment":
         ensure => "present",
         content => template("epflsti_coreos/environment.erb"),
-        # First Puppet run (at install time, before reboot) will only create this file.
-        tag => "bootstrap"
     }
 
-    file { "/etc/systemd/system/fleet.service.d":
+    file { "$rootpath/etc/systemd/system/fleet.service.d":
       ensure => "directory"
     } ->
-    file { "/etc/systemd/system/fleet.service.d/50-metadata.conf":
+    file { "$rootpath/etc/systemd/system/fleet.service.d/50-metadata.conf":
       ensure => "present",
       content => template("epflsti_coreos/50-fleet-metadata.conf.erb")
     } ~>
-    exec { "restart fleet in host":
+    exec { "restart fleetd":
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart fleet.service",
-      refreshonly => true
+      refreshonly => true,
+      unless => "/usr/bin test '${::lifecycle_stage}' = bootstrap"
     }
 }
