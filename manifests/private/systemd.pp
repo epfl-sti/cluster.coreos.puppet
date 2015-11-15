@@ -16,12 +16,12 @@ class epflsti_coreos::private::systemd {
       $_file_prereqs = File["/etc/systemd/system/${name}"]
     }
 
-    $_is_service = !(!($name =~ /\.service$/));
+    $_is_service = !(!($name =~ /\.service$/))
   
     if ($enable == undef) {
-      $_do_enable = $_is_service;
+      $_do_enable = $_is_service
     } else {
-      $_do_enable = $enable;
+      $_do_enable = $enable
     }
 
     if ($_do_enable) {
@@ -34,11 +34,11 @@ class epflsti_coreos::private::systemd {
     }
 
     if ($::lifecycle_stage == "bootstrap") {
-      $_do_start = false;
+      $_do_start = false
     } elsif ($start == undef) {
-      $_do_start = $_is_service;
+      $_do_start = $_is_service
     } else {
-      $_do_start = $start;
+      $_do_start = $start
     }
   
     if ($_do_start) {
