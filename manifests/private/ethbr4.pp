@@ -1,4 +1,4 @@
-# Configure the IPv4 bridge.
+# Configure the IPv4 bridge ethbr4.
 #
 # The main IPv4 address of each CoreOS node is bridged. This lets
 # Docker containers (most notably, the Foreman / Puppet master)
@@ -20,4 +20,9 @@ class epflsti_coreos::private::ethbr4 {
                      "Kind=bridge\n",
                      ])
   }
+
+  systemd::unit { "50-ethbr4-internal.network":
+    content => template("epflsti_coreos/ethbr4/50-ethbr4-internal.network.erb")
+  }
+
 }

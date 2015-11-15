@@ -1,0 +1,13 @@
+# Network configuration of ethbr4 for an internal node.
+#
+# Managed by Puppet, DO NOT EDIT
+#
+# Overridden by 40-ethbr4-nogateway.network when that
+# symlink exists.
+[Match]
+Name=ethbr4
+
+[Network]
+Address=<%= @ipaddress %>/24
+Gateway=<%= @gateway_vip %>
+DNS=<%= @dns_vip %>
