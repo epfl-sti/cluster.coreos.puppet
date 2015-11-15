@@ -10,6 +10,7 @@ class epflsti_coreos(
   $ups_hosts = [],
   $etcd_region = undef
   ) {
+  include ::epflsti_coreos::private::systemd
   validate_hash($etcd2_quorum_members)
 
   class { "epflsti_coreos::ssh": }
@@ -17,6 +18,17 @@ class epflsti_coreos(
   class { "epflsti_coreos::hostvars":
     ups_hosts => $ups_hosts,
     etcd_region => $etcd_region
+  }
+
+  # Networking setup - Best *not* done at production time!
+  if ($::lifecycle_stage == "bootstrap") {
+    ::epflsti_coreos::private::systemd { "ethbr4.netdev":
+      content => join("", [
+                           "[NetDev]\n",
+                           "Name=ethbr4\n",
+                           "Kind=bridge\n",
+                           ])
+    }
   }
 
   if ($::lifecycle_stage == "production") {
