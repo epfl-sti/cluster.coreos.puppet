@@ -1,15 +1,16 @@
 # Configure networking pre-bootstrap.
 #
-# The main IPv4 address of each CoreOS node is bridged. This lets
-# Docker containers (most notably, the Foreman / Puppet master)
-# claim an IP address on the internal (RFC1918) IPv4 network.
-# If the container moves, that IP (called a "Virtual IP", or VIP)
-# can stay the same, and the clients will catch up (after their
-# ARP timeout expires) with zero reconfiguration.
+# The primary physical interface of each CoreOS node is bridged on a
+# bridge called ethbr4 ("Ethernet bridge for IPv4"). This lets Docker
+# containers (most notably, the Foreman / Puppet master) claim an IP
+# address on the internal (RFC1918) IPv4 network. If the container
+# moves, that IP (called a "Virtual IP", or VIP) can stay the same,
+# and the clients will catch up (after their ARP timeout expires) with
+# zero reconfiguration.
 #
-# docker0 is *not* used, because claiming an IP in this
-# way is obviously reserved to trusted containers.
-#
+# The primary physical interface is set by Foreman's "primary" flag.
+# Non-primary physical interfaces are simply disabled (no DHCPv4 in
+# particular).
 class epflsti_coreos::private::networking {
   include ::epflsti_coreos::private::systemd
 
