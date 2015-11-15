@@ -18,7 +18,7 @@
 # === Actions:
 #
 # * Update /home/core/.ssh/authorized_keys
-# * Set sane /etc/ssh/sshd.conf
+# * Set sane /etc/ssh/ssh_config
 #
 class epflsti_coreos::ssh {
   $rootpath = "/opt/root"
