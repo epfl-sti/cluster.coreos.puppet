@@ -9,4 +9,5 @@ class epflsti_coreos() {
   class { "epflsti_coreos::ipmi": }
   class { "epflsti_coreos::ssh": }
   class { "epflsti_coreos::etcd2": }
+  class { "epflsti_coreos::puppet": }
 }
