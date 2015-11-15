@@ -16,15 +16,15 @@ class epflsti_coreos::private::docker() {
 
   systemd::unit { "docker-tcp.socket":
     content => "[Unit]
-              Description=Docker socket for the API
+Description=Docker socket for the API
 
-              [Socket]
-              ListenStream=2375
-              BindIPv6Only=both
-              Service=docker.service
+[Socket]
+ListenStream=2375
+BindIPv6Only=both
+Service=docker.service
 
-              [Install]
-              WantedBy=sockets.target
+[Install]
+WantedBy=sockets.target
 ",
     enable => true,
     start => true
