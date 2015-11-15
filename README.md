@@ -31,12 +31,12 @@ Upload the image:
 
 At EPFL-STI, we [provision bare metal with Foreman](https://github.com/epfl-sti/cluster.foreman). We are currently [infatuated with CoreOS](https://github.com/epfl-sti/cluster.foreman), which has its [`cloud-config.yaml`](https://coreos.com/os/docs/latest/cloud-config.html) system, but even they say right in that page that "[i]t is not intended to be a Chef/Puppet replacement".
 
-Puppet + Foreman integration provides us with the following benefits:
-* End-to-end automation for provisioning (installation and configuration) of nodes, including [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface), means you can treat nodes as [cattle, not pets](https://news.ycombinator.com/item?id=7311704)
+In our CoreOS clusters, Puppet + Foreman integration provides us with the following benefits:
+* End-to-end automation for node provisioning (i.e. installation and configuration), including [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface), means you can treat nodes as [cattle, not pets](https://news.ycombinator.com/item?id=7311704)
+* Assign IP addresses centrally for all use cases (in EPFL-STI clusters we use separate subnets for the following: IPMI for lifecycle management, RFC1918 IPv4 for privileged services, and routable IPv6 for tenants)
 * Continuous (re)configuration: add or modify services without reinstalling / rebooting
 * Specialized configuration of individual nodes when you really do need it: etcd quorum member, gateway node with the physical Ethernet connection to the outside world...
 * Gather key facts (in particular MAC addresses, `dmidecode`d serial numbers) into Foreman's centralized database
-* Attribute IP addresses centrally for all use cases (in EPFL-STI clusters it goes like this: IPMI for lifecycle management, RFC1918 IPv4 for privileged services, routable IPv6 for tenants)
 * Poor man's monitoring: was the node at least alive in the last 30 minutes?
 
 # How it works
