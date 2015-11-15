@@ -21,7 +21,7 @@ class epflsti_coreos(
 
   # Networking setup - Best *not* done at production time!
   if ($::lifecycle_stage == "bootstrap") {
-    class { "epflsti_coreos::private::ethbr4": }
+    class { "epflsti_coreos::private::networking": }
   }
 
   if ($::lifecycle_stage == "production") {

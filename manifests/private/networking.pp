@@ -1,4 +1,4 @@
-# Configure the IPv4 bridge ethbr4.
+# Configure networking pre-bootstrap.
 #
 # The main IPv4 address of each CoreOS node is bridged. This lets
 # Docker containers (most notably, the Foreman / Puppet master)
@@ -10,7 +10,7 @@
 # docker0 is *not* used, because claiming an IP in this
 # way is obviously reserved to trusted containers.
 #
-class epflsti_coreos::private::ethbr4 {
+class epflsti_coreos::private::networking {
   include ::epflsti_coreos::private::systemd
 
   systemd::unit { "ethbr4.netdev":
@@ -22,7 +22,7 @@ class epflsti_coreos::private::ethbr4 {
   }
 
   systemd::unit { "50-ethbr4-internal.network":
-    content => template("epflsti_coreos/ethbr4/50-ethbr4-internal.network.erb")
+    content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
 }
