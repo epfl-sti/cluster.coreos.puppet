@@ -24,6 +24,14 @@ class epflsti_coreos::deis() {
     }
   }
 
+  define run_deis_bin_script() {
+    file { "${::epflsti_coreos::deis::rootpath}/run/deis/bin/${name}":
+      mode => "0755",
+      content => template("epflsti_coreos/deis/${name}.erb"),
+      require => File["${::epflsti_coreos::deis::rootpath}/run/deis/bin"]
+    }
+  }
+
   opt_bin_script {
     ["wupiao", "download-k8s-binary", "deis-graceful-shutdown",
      "scheduler-policy.json", "deis-debug-logs"]:
@@ -32,13 +40,6 @@ class epflsti_coreos::deis() {
   if ($::lifecycle_stage != "bootstrap") {
     file { ["${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
       ensure => "directory",
-    }
-    define run_deis_bin_script() {
-      file { "${::epflsti_coreos::deis::rootpath}/run/deis/bin/${name}":
-        mode => "0755",
-        content => template("epflsti_coreos/deis/${name}.erb"),
-        require => File["${::epflsti_coreos::deis::rootpath}/run/deis/bin"]
-      }
     }
     run_deis_bin_script { ["get_image", "preseed"]: }
   }
