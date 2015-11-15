@@ -28,25 +28,38 @@ class epflsti_coreos::private::networking {
     content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
+  fail("A
+
+B")
+
   systemd::unit { "00-${_primary_interface}.network":
-    content => join([
-              "[Match]\n",
-              "Name=${_primary_interface}\n",
-              "\n",
-              "[Network]\n",
-              "DHCP=no\n",
-              "Bridge=ethbr4\n"
-                     ])
+    content => "# Network configuration of ${_primary_interface}
+#
+# Managed by Puppet, DO NOT EDIT
+#
+[Match]
+Name=${_primary_interface}
+
+[Network]
+DHCP=no
+Bridge=ethbr4
+"
   }
 
-  systemd::unit { "70-leave-unconfigured.network":
-    content => join([
-              "[Match]\n",
-              "Name=enp*\n",
-              "\n",
-              "[Network]\n",
-              "DHCP=no\n"
-                     ])
-  }
+  systemd::unit { "99-fallback-physical.network":
+    content => "# Fallback configuration for physical interfaces.
+#
+# Unless specified otherwise, physical interfaces
+# are left unconfigured, and do not attempt to DHCP.
+#
+# Managed by Puppet, DO NOT EDIT
+#
+[Match]
+Name=enp*
 
+[Network]
+DHCP=no
+"
+
+  }
 }
