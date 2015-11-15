@@ -13,7 +13,7 @@ class epflsti_coreos(
   validate_hash($etcd2_quorum_members)
 
   class { "epflsti_coreos::ssh": }
-  class { "epflsti_coreos::puppet": }
+  class { "epflsti_coreos::private::puppet": }
   class { "epflsti_coreos::private::hostvars":
     ups_hosts => $ups_hosts,
     etcd_region => $etcd_region
