@@ -1,12 +1,43 @@
 # cluster.coreos.puppet
 
-Puppet configuration (manifests) to run a CoreOS cluster, EPFL-STI style
+[![](https://badge.imagelayers.io/epflsti/puppet.svg)](https://imagelayers.io/?images=epflsti/puppet:latest 'View image size and layers')
 
-To check out [`cluster.coreos.puppet`](https://github.com/epfl-sti/cluster.coreos.puppet) inside the [`cluster.foreman`](https://github.com/epfl-sti/cluster.foreman) Docker container:
+Puppet Docker image and configuration (manifests) to run a CoreOS
+cluster, EPFL-STI style
 
+Docker registry: https://registry.hub.docker.com/u/epflsti/puppet/
+
+# Getting Started
+
+1. Configure and run the Puppet master: see [cluster.foreman](https://github.com/epfl-sti/cluster.foreman)
+2. Check out [`cluster.coreos.puppet`](https://github.com/epfl-sti/cluster.coreos.puppet) inside the [`cluster.foreman`](https://github.com/epfl-sti/cluster.foreman) Docker container:
     docker exec -it puppetmaster.mysubdomain.mydomain.com /bin/bash
     cd /etc/puppet/environments/production/modules
     git clone https://github.com/epfl-sti/cluster.coreos.puppet.git epflsti_coreos
+3. Provision a couple of nodes from the Foreman interface; they should auto-integrate into the Puppet cluster.
+
+# Development
+
+Build the Puppet agent image with Docker:
+
+    docker build -t epflsti/puppet .
+
+Upload the image:
+
+    docker push epflsti/puppet
+
+
+# Why Puppet on CoreOS?
+
+At EPFL-STI, we [provision bare metal with Foreman](https://github.com/epfl-sti/cluster.foreman). We are currently [infatuated with CoreOS](https://github.com/epfl-sti/cluster.foreman), which has its [`cloud-config.yaml`](https://coreos.com/os/docs/latest/cloud-config.html) system, but even they say right in that page that "[i]t is not intended to be a Chef/Puppet replacement".
+
+Puppet + Foreman integration provides us with the following benefits:
+* End-to-end automation for provisioning (installation and configuration) of nodes, including [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface), means you can treat nodes as [cattle, not pets](https://news.ycombinator.com/item?id=7311704)
+* Continuous (re)configuration: add or modify services without reinstalling / rebooting
+* Specialized configuration of individual nodes when you really do need it: etcd quorum member, gateway node with the physical Ethernet connection to the outside world...
+* Gather key facts (in particular MAC addresses, `dmidecode`d serial numbers) into Foreman's centralized database
+* Attribute IP addresses centrally for all use cases (in EPFL-STI clusters it goes like this: IPMI for lifecycle management, RFC1918 IPv4 for privileged services, routable IPv6 for tenants)
+* Poor man's monitoring: was the node at least alive in the last 30 minutes?
 
 # How it works
 
