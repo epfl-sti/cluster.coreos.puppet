@@ -11,7 +11,7 @@ class epflsti_coreos::private::systemd {
       content => $content,
     }
 
-    $_is_service = !(!($name =~ m/\.service$/));
+    $_is_service = !(!($name =~ /\.service$/));
   
     if ($enable == undef) {
       $_do_enable = $_is_service;
