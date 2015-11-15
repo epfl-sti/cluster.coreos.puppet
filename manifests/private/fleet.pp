@@ -6,6 +6,9 @@
 #
 # === Parameters:
 #
+# [*ups_hosts*]
+#   A list of short hostnames that have uninterruptible power plugged into them.
+#
 # [*region*]
 #   The "region=" metadata for fleet
 #
@@ -18,9 +21,13 @@
 # This class is bootstrap-aware.
 
 class epflsti_coreos::private::fleet(
+  $ups_hosts = [],
   $region = undef
 ) {
+    validate_array($ups_hosts)
     validate_string($etcd_region)
+
+    $has_ups = member($ups_hosts, $::hostname)
 
     include ::epflsti_coreos::private::systemd
     systemd::unit { "fleet.service":

@@ -22,7 +22,8 @@ class epflsti_coreos(
       members => $etcd2_quorum_members
     }
   class { "epflsti_coreos::private::fleet":
-    region => $etcd_region
+    region => $etcd_region,
+    ups_hosts => $ups_hosts
   }
 
   # Networking setup - Best *not* done at production time!
