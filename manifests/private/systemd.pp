@@ -7,8 +7,13 @@ class epflsti_coreos::private::systemd {
     $content = undef
   ) {
   
-    file { "/etc/systemd/system/${name}":
-      content => $content,
+    if ($content == undef) {
+      $_file_prereqs = []
+    } else {
+      file { "/etc/systemd/system/${name}":
+        content => $content,
+      }
+      $_file_prereqs = File["/etc/systemd/system/${name}"]
     }
 
     $_is_service = !(!($name =~ /\.service$/));
@@ -24,7 +29,7 @@ class epflsti_coreos::private::systemd {
         command => "/usr/bin/systemctl enable ${name}",
         path => $::path,
         unless => "/usr/bin/systemctl is-enabled ${name}",
-        require => File["/etc/systemd/system/${name}"]
+        require => $_file_prereqs
       }  
     }
 
@@ -40,7 +45,7 @@ class epflsti_coreos::private::systemd {
       exec { "Restarting ${name} in systemd":
         command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl reload-or-restart ${name}",
         path => $::path,
-        require => File["/etc/systemd/system/${name}"]
+        require => $_file_prereqs
       }
     }
   }
