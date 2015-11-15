@@ -9,8 +9,10 @@ class epflsti_coreos::private::systemd {
   
     if ($name =~ /\.(service)$/) {
       $_kind = "service"
+      $_subdir = "system"
     } elsif ($name =~ /\.(network|netdev)$/) {
       $_kind = "network"
+      $_subdir = "network"
     } else {
       fail("Cannot determine unit type for ${name}")
     }
@@ -18,10 +20,10 @@ class epflsti_coreos::private::systemd {
     if ($content == undef) {
       $_file_prereqs = []
     } else {
-      file { "/etc/systemd/${_kind}/${name}":
+      file { "/etc/systemd/${_subdir}/${name}":
         content => $content,
       }
-      $_file_prereqs = File["/etc/systemd/${_kind}/${name}"]
+      $_file_prereqs = File["/etc/systemd/${_subdir}/${name}"]
     }
 
     if ($enable == undef) {
