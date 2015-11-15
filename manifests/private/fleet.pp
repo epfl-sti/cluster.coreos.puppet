@@ -18,7 +18,7 @@
 # This class is bootstrap-aware.
 
 class epflsti_coreos::private::fleet(
-  $etcd_region = undef
+  $region = undef
 ) {
     validate_string($etcd_region)
 
