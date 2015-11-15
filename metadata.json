@@ -5,7 +5,7 @@
   "summary": "CoreOS configuration via Puppet",
   "description": "CoreOS configuration via Puppet",
   "license": "MIT License",
-  "project_page": "https://github.com/epfl-sti/cluster.coreos.puppet.manifests",
+  "project_page": "https://github.com/epfl-sti/cluster.coreos.puppet",
   "issues_url": null,
   "operatingsystem_support": [
     {
