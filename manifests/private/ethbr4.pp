@@ -13,7 +13,7 @@
 class epflsti_coreos::private::ethbr4 {
   include ::epflsti_coreos::private::systemd
 
-  ::epflsti_coreos::private::systemd { "ethbr4.netdev":
+  systemd::unit { "ethbr4.netdev":
     content => join([
                      "[NetDev]\n",
                      "Name=ethbr4\n",

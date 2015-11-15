@@ -44,7 +44,7 @@ class epflsti_coreos::deis() {
     run_deis_bin_script { ["get_image", "preseed"]: }
   }
 
-  epflsti_coreos::private::systemd::unit { "graceful-deis-shutdown.service":
+  systemd::unit { "graceful-deis-shutdown.service":
     content => template('epflsti_coreos/deis/graceful-deis-shutdown.service.erb'),
     start => false
   }
