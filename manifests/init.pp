@@ -21,7 +21,7 @@ class epflsti_coreos(
 
   if ($::lifecycle_stage == "production") {
     class { "epflsti_coreos::ipmi": }
-    class { "epflsti_coreos::etcd2":
+    class { "epflsti_coreos::private::etcd2":
       members => $etcd2_quorum_members
     }
   }
