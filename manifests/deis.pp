@@ -12,7 +12,7 @@ class epflsti_coreos::deis() {
   include ::epflsti_coreos::private::systemd
 
   $rootpath = "/opt/root"
-  file { ["${rootpath}/opt", "${rootpath}/opt/bin"] }
+  file { ["${rootpath}/opt", "${rootpath}/opt/bin"]:
     ensure => "directory",
   }
 
