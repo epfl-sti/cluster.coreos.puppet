@@ -4,11 +4,31 @@
 #
 # === Actions:
 #
-# * Adds --insecure-registry docker-registry.ne.cloud.epfl.ch:5000
-#   on the command line of all dockerd's
+# * Add select flags to the command line of all dockerd's
+# * Restart the Docker daemon, except when bootstrapping
 #
+# === Bootstrapping:
+#
+# This class is bootstrap-aware.
 
 class epflsti_coreos::private::docker() {
+  include ::epflsti_coreos::private::systemd
+
+  systemd::unit { "docker-tcp.socket":
+    content => "[Unit]
+              Description=Docker socket for the API
+
+              [Socket]
+              ListenStream=2375
+              BindIPv6Only=both
+              Service=docker.service
+
+              [Install]
+              WantedBy=sockets.target
+",
+    enable => true,
+    start => true
+  } ->
   file { "/etc/systemd/system/docker.service.d":
     ensure => "directory"
   } ->
