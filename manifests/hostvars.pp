@@ -43,6 +43,6 @@ class epflsti_coreos::hostvars(
     exec { "restart fleetd":
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart fleet.service",
       refreshonly => true,
-      unless => "/usr/bin test '${::lifecycle_stage}' = bootstrap"
+      unless => "/usr/bin/test '${::lifecycle_stage}' = bootstrap"
     }
 }
