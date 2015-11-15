@@ -4,7 +4,9 @@
 #
 # Note that we are talking about the steady-state Puppet here; not the
 # bootstrap run before reboot. See ../README.md for details.
-class epflsti_coreos::puppet() {
+class epflsti_coreos::puppet(
+  $has_ipmi = true
+  ) {
   $rootpath = "/opt/root"
   include ::epflsti_coreos::private::systemd
 
