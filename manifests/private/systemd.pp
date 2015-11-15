@@ -9,7 +9,7 @@ class epflsti_coreos::private::systemd {
   
     if ($name =~ /\.(service)$/) {
       $_kind = "service"
-    } elsif ($name =~ /\.(network|netdev)$) {
+    } elsif ($name =~ /\.(network|netdev)$/) {
       $_kind = "network"
     } else {
       fail("Cannot determine unit type for ${name}")
