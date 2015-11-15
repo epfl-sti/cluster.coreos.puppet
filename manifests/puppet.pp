@@ -4,7 +4,7 @@
 #
 # Note that we are talking about the steady-state Puppet here; not the
 # bootstrap run before reboot. See ../README.md for details.
-class epfsti_coreos::puppet() {
+class epflsti_coreos::puppet() {
   $rootpath = "/opt/root"
 
   $facts = {
