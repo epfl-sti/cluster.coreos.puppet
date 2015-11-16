@@ -1,5 +1,5 @@
 sudo systemctl daemon-reload
-<% if @bootstrap_stage == "production" -%>
+<% if @lifecycle_stage == "production" -%>
 fleetctl list-units
 fleetctl list-machines
 etcdctl member list
