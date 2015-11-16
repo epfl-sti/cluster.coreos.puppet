@@ -1,15 +1,16 @@
 sudo systemctl daemon-reload
 <% if @lifecycle_stage == "production" -%>
-fleetctl list-units
-fleetctl list-machines
-etcdctl member list
-etcdctl cluster-health
 journalctl -xe
 journalctl -l
 systemctl list-unit-files
 systemctl cat puppet.service
 docker exec -it puppet.service puppet agent -t
 sudo docker rm -f puppet.service
+etcdctl cluster-health
+etcdctl member list
+fleetctl list-machines
+fleetctl list-units
+fleetctl list-unit-files
 <%- else -%>
 sudo sh -c "source /mnt/etc/environment; /home/core/cluster.coreos.install/install.sh puppet"
 (cd /home/core/cluster.coreos.install/; sudo git pull)
