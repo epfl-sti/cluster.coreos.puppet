@@ -7,8 +7,17 @@
 # AYBABTU nature in a sort of uncomfortably pleasant way. Since we already
 # got CoreOS to bootstrap in our own way, we only want to keep the pieces
 # that install Deis itself on top.
+#
+# === Parameters:
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is mounted
+#
 
-class epflsti_coreos::deis() {
+class epflsti_coreos::private::deis(
+  $rootpath = $epflsti_coreos::private::params::rootpath
+)
+inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
   $rootpath = "/opt/root"
@@ -17,18 +26,18 @@ class epflsti_coreos::deis() {
     { ensure => "directory" })
 
   define opt_bin_script() {
-    file { "${::epflsti_coreos::deis::rootpath}/opt/bin/${name}":
+    file { "${::epflsti_coreos::private::deis::rootpath}/opt/bin/${name}":
       mode => "0755",
       content => template("epflsti_coreos/deis/${name}.erb"),
-      require => File["${::epflsti_coreos::deis::rootpath}/opt/bin"]
+      require => File["${::epflsti_coreos::private::deis::rootpath}/opt/bin"]
     }
   }
 
   define run_deis_bin_script() {
-    file { "${::epflsti_coreos::deis::rootpath}/run/deis/bin/${name}":
+    file { "${::epflsti_coreos::private::deis::rootpath}/run/deis/bin/${name}":
       mode => "0755",
       content => template("epflsti_coreos/deis/${name}.erb"),
-      require => File["${::epflsti_coreos::deis::rootpath}/run/deis/bin"]
+      require => File["${::epflsti_coreos::private::deis::rootpath}/run/deis/bin"]
     }
   }
 
