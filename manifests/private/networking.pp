@@ -33,7 +33,7 @@
 # of a bad idea that it has never been tested; init.pp only invokes
 # this class when $lifecycle_state == "bootstrap".
 class epflsti_coreos::private::networking(
-  $primary_interface = $::epflsti_coreos::private::params::private_interface
+  $primary_interface = $::epflsti_coreos::private::params::primary_interface
 )
 inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
