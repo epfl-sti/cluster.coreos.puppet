@@ -14,6 +14,12 @@
 class epflsti_coreos::private::networking {
   include ::epflsti_coreos::private::systemd
 
+  $rootpath = "/opt/root"
+
+  file { "$rootpath/etc/hostname":
+    content => "${::fqdn}\n"
+  }
+
   $_primary_interface = inline_template(
     '<%= @foreman_interfaces.first{|i| i.primary}["identifier"] %>')
 
