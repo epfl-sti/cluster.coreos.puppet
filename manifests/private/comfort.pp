@@ -24,7 +24,7 @@ docker exec puppet.service puppet agent -t
   }
 
   file { "/opt/bin/fleetcheck":
-    permissions => '0755',
+    perm => '0755',
     content => template("epflsti_coreos/fleetcheck.erb")
   }
 }
