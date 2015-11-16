@@ -21,12 +21,12 @@
 # This class is bootstrap-aware.
 
 class epflsti_coreos::private::fleet() {
-    $ups_hosts = parseyaml($::ups_hosts)
-    $etcd_region = $::etcd_region
-    validate_array($ups_hosts)
-    validate_string($etcd_region)
+    $ups_host_list = parseyaml($::ups_hosts)
+    $region = $::etcd_region
+    validate_array($ups_host_list)
+    validate_string($region)
 
-    $has_ups = member($ups_hosts, $::hostname)
+    $has_ups = member($ups_host_list, $::hostname)
 
     include ::epflsti_coreos::private::systemd
     systemd::unit { "fleet.service":
