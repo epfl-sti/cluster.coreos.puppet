@@ -2,6 +2,9 @@
 #
 # Variables:
 #
+# [*root_path*]
+#   The path where the root is mounted at.
+#
 # [*primary_interface*]
 #   The name of the network interface connected to the internal network
 #
@@ -11,6 +14,8 @@
 #   installed); unused for internal nodes
 
 class epflsti_coreos::private::params {
+  $rootpath = "/opt/root"
+
   $primary_interface = inline_template(
     '<%= @foreman_interfaces.first{|i| i.primary}["identifier"] %>')
 
