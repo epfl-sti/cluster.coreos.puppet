@@ -13,7 +13,7 @@ sudo docker rm -f puppet.service
 <% else %>
 sudo sh -c "source /mnt/etc/environment; /home/core/cluster.coreos.install/install.sh puppet"
 journalctl -f -u coreos-bootstrap.service
-sudo systemctl restart coreos-bootstrap.service
+sudo systemctl restart coreos-bootstrap.service && journalctl -f -u coreos-bootstrap.service
 docker exec -it puppet-bootstrap.service puppet agent -t
 sudo docker rm -f puppet-bootstrap.service
 sudo /home/core/cluster.coreos.install/install.sh puppet
