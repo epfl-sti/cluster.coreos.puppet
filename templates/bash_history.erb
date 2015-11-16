@@ -1,0 +1,14 @@
+<% if @bootstrap_stage == "production" %>
+fleetctl list-units
+fleetctl list-machines
+etcdctl member list
+etcdctl cluster-health
+journalctl -xe
+journalctl -l
+systemctl list-unit-files
+systemctl cat puppet.service
+docker exec puppet.service puppet agent -t
+<% else %>
+journalctl -f -u coreos-bootstrap.service
+systemctl restart coreos-bootstrap.service
+<% end %>

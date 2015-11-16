@@ -1,5 +1,10 @@
 # Comfort functions for systems administrators
 #
+# === Bootstrapping:
+#
+# This class is bootstrap-safe. In bootstrap mode, you get a
+# .bash_history with commands useful for the bootstrap; likewise in
+# production.
 class epflsti_coreos::private::comfort() {
   file { "/home/core/.toolboxrc":
     owner => 500,
@@ -13,16 +18,7 @@ TOOLBOX_DOCKER_TAG=latest
     owner => 500,
     group => 500,
     replace => false,
-    content => "fleetctl list-units
-fleetctl list-machines
-etcdctl member list
-etcdctl cluster-health
-journalctl -xe
-journalctl -l
-systemctl list-unit-files
-systemctl cat puppet.service
-docker exec puppet.service puppet agent -t
-"
+    content => template("epflsti_coreos/bash_history.erb")
   }
 
   $rootpath = "/opt/root"

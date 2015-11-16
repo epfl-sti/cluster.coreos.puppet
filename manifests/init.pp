@@ -26,6 +26,7 @@ class epflsti_coreos(
     region => $etcd_region,
     ups_hosts => $ups_hosts
   }
+  class { "epflsti_coreos::private::comfort": }
 
   # Networking setup - Best *not* done at production time!
   if ($::lifecycle_stage == "bootstrap") {
@@ -33,6 +34,5 @@ class epflsti_coreos(
   }
 
   if ($::lifecycle_stage == "production") {
-    class { "epflsti_coreos::private::comfort": }
   }
 }
