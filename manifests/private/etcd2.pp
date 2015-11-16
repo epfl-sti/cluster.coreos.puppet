@@ -44,7 +44,7 @@ class epflsti_coreos::private::etcd2() {
   $members = parseyaml($::etcd2_quorum_members)
   validate_hash($members)
 
-  $is_proxy = empty(intersection([$::ipaddress], values($::etcd2_quorum_members)))
+  $is_proxy = empty(intersection([$::ipaddress], values($members)))
 
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
