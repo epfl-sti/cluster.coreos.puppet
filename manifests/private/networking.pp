@@ -38,7 +38,7 @@ class epflsti_coreos::private::networking(
 inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
-  file { "$::epflsti_coreos::private::params::rootpath/etc/hostname":
+  file { "${::epflsti_coreos::private::params::rootpath}/etc/hostname":
     content => "${::fqdn}\n"
   }
 
