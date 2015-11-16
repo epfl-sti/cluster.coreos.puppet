@@ -11,6 +11,7 @@ ExecStart=/usr/bin/docker run <% -%>
   --net=host <% -%>
   --privileged <% -%>
   -v /:/opt/root <% -%>
+  -v /dev:/opt/root/dev <% -%>
   -v /etc/systemd:/etc/systemd <% -%>
   -v /etc/puppet:/etc/puppet <% -%>
   -v /var/lib/puppet:/var/lib/puppet <% -%>
