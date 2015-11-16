@@ -12,9 +12,9 @@ class epflsti_coreos::deis() {
   include ::epflsti_coreos::private::systemd
 
   $rootpath = "/opt/root"
-  file { ["${rootpath}/opt", "${rootpath}/opt/bin"]:
-    ensure => "directory",
-  }
+  ensure_resource('file',
+    ["${rootpath}/opt", "${rootpath}/opt/bin"],
+    { ensure => "directory" })
 
   define opt_bin_script() {
     file { "${::epflsti_coreos::deis::rootpath}/opt/bin/${name}":
