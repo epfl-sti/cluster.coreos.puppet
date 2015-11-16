@@ -39,6 +39,27 @@
 #   by this variable (see Actions: below) are not persistent for that
 #   reason.
 #
+# === Parameters:
+#
+# [*external_interface*]
+#   The name of the network interface connected to the Internet#
+#
+# [*external_address*]
+#   IPv4 address on the external network
+#
+# [*external_netmask*]
+#   IPv4 netmask on the external network
+#
+# [*external_gateway*]
+#   IPv4 default route on the external network
+#
+# [*is_active*]
+#   True on the active *outgoing* gateway (the one that holds the
+#   $::gateway_vip); false on the hot standby(s). Note that this
+#   is for egress traffic only; with care, ingress traffic can be
+#   configured with an active-active setup (although this is not
+#   implemented yet)
+#
 # === Global Variables:
 #
 # [*$::gateway_vip*]
@@ -59,11 +80,11 @@
 # $external_interface.
 class epflsti_coreos::gateway(
   $external_address = undef,
-  $external_interface = $::epflsti_coreos::gateway::private::params::external_interface,
+  $external_interface = $::epflsti_coreos::private::params::external_interface,
   $external_gateway = undef,
   $external_netmask = undef,
   $is_active = undef
-) inherits epflsti_coreos::gateway::private::params {
+) inherits epflsti_coreos::private::params {
   exec { "restart networkd in host":
     command => "/usr/bin/systemctl restart systemd-networkd.service",
     refreshonly => true

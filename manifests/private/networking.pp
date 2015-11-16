@@ -21,13 +21,21 @@
 # * Disable DHCPv4 on all physical interfaces, primary or not, so as
 #   to save valuable DHCP address space
 #
+# === Parameters:
+#
+# [*primary_interface*]
+#   The name of the network interface connected to the internal network
+#
 # === Bootstrapping:
 #
 # Although there is no known reason why reconfiguring the network
 # mid-flight on a production system would not work, this has never
 # been tested out of caution; init.pp only invokes this class when
 # $lifecycle_state == "bootstrap".
-class epflsti_coreos::private::networking {
+class epflsti_coreos::private::networking(
+  $primary_interface = $::epflsti_coreos::private::params::private_interface
+)
+inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
   $rootpath = "/opt/root"
@@ -35,9 +43,6 @@ class epflsti_coreos::private::networking {
   file { "$rootpath/etc/hostname":
     content => "${::fqdn}\n"
   }
-
-  $_primary_interface = inline_template(
-    '<%= @foreman_interfaces.first{|i| i.primary}["identifier"] %>')
 
   systemd::unit { "ethbr4.netdev":
     content => join([
