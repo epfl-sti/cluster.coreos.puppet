@@ -4,12 +4,12 @@
 #
 # This class is intended to be loaded on all nodes.
 #
-# === Parameters:
+# === Global variables:
 #
 # [*ups_hosts*]
-#   A list of short hostnames that have uninterruptible power plugged into them.
+#   A YAML-encoded list of short hostnames that have uninterruptible power plugged into them.
 #
-# [*region*]
+# [*etcd_region*]
 #   The "region=" metadata for fleet
 #
 # === Actions:
@@ -20,10 +20,9 @@
 #
 # This class is bootstrap-aware.
 
-class epflsti_coreos::private::fleet(
-  $ups_hosts = [],
-  $region = undef
-) {
+class epflsti_coreos::private::fleet() {
+    $ups_hosts = parseyaml($::ups_hosts)
+    $etcd_region = $::etcd_region
     validate_array($ups_hosts)
     validate_string($etcd_region)
 

@@ -5,23 +5,15 @@
 # that cannot be configured in software (such as gateway), should
 # also be invoked directly; all others are invoked from here.
 
-class epflsti_coreos(
-  $ups_hosts = [],
-  $etcd_region = undef
-  ) {
+class epflsti_coreos() {
 
-  class { "epflsti_coreos::private::environment":
-    ups_hosts => $ups_hosts
-  }
+  class { "epflsti_coreos::private::environment": }
   class { "epflsti_coreos::private::ssh": }
   class { "epflsti_coreos::private::puppet": }
   class { "epflsti_coreos::private::ipmi": }
   class { "epflsti_coreos::private::docker": }
   class { "epflsti_coreos::private::etcd2": }
-  class { "epflsti_coreos::private::fleet":
-    region => $etcd_region,
-    ups_hosts => $ups_hosts
-  }
+  class { "epflsti_coreos::private::fleet":  }
   class { "epflsti_coreos::private::comfort": }
 
   # Networking setup - Best *not* done at production time!
