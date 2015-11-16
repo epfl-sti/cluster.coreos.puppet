@@ -53,13 +53,13 @@ Kind=bridge
     content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
-  systemd::unit { "00-${_primary_interface}.network":
-    content => "# Network configuration of ${_primary_interface}
+  systemd::unit { "00-${primary_interface}.network":
+    content => "# Network configuration of ${primary_interface}
 #
 # Managed by Puppet, DO NOT EDIT
 #
 [Match]
-Name=${_primary_interface}
+Name=${primary_interface}
 
 [Network]
 DHCP=no
