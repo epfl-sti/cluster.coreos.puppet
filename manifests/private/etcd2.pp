@@ -56,7 +56,7 @@ class epflsti_coreos::private::etcd2() {
   exec { "restart etcd2":
     refreshonly => true,
     path => $path,
-    command => "systemctl etcd2 restart"
+    command => "systemctl restart etcd2"
   }
 
   if ($::lifecycle_stage == "production") {
