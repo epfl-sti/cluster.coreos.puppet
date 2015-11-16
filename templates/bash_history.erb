@@ -1,5 +1,5 @@
 sudo systemctl daemon-reload
-<% if @bootstrap_stage == "production" %>
+<% if @bootstrap_stage == "production" -%>
 fleetctl list-units
 fleetctl list-machines
 etcdctl member list
@@ -10,7 +10,7 @@ systemctl list-unit-files
 systemctl cat puppet.service
 docker exec -it puppet.service puppet agent -t
 sudo docker rm -f puppet.service
-<% else %>
+<%- else -%>
 sudo sh -c "source /mnt/etc/environment; /home/core/cluster.coreos.install/install.sh puppet"
 (cd /home/core/cluster.coreos.install/; sudo git pull)
 journalctl -f -u coreos-bootstrap.service
