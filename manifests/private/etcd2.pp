@@ -52,6 +52,11 @@ class epflsti_coreos::private::etcd2() {
   file { "/etc/systemd/system/etcd2.service.d/20-puppet.conf":
     ensure => "present",
     content => template("epflsti_coreos/20-etcd2.conf.erb")
+  } ~>
+  exec { "restart etcd2":
+    refreshonly => true,
+    path => $path,
+    command => "systemctl etcd2 restart"
   }
 
   if ($::lifecycle_stage == "production") {
