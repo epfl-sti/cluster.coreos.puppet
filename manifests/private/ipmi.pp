@@ -5,7 +5,7 @@ class epflsti_coreos::private::ipmi() {
   $rootpath = "/opt/root"
 
   exec { "insert IPMI modules and wait for /dev/ipmi0 to appear":
-    command => "/usr/sbin/chroot ${rootpath} /bin/bash -e -x -c 'modprobe ipmi_si; modprobe ipmi_devintf; for i in \$(seq 1 100); do test -c /dev/ipmi0 && exit 0; sleep 0.1; set +x; done; exit 2'",
+    command => "/usr/sbin/chroot ${rootpath} /bin/bash -c 'modprobe ipmi_si; modprobe ipmi_devintf' || exit 1; set -e -x; for i in \$(seq 1 100); do test -c /dev/ipmi0 && exit 0; sleep 0.1; set +x; done; exit 2",
     path => $::path,
     creates => "/dev/ipmi0",
   } -> anchor { "dev_ipmi0_available": }
