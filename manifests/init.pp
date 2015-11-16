@@ -17,6 +17,7 @@ class epflsti_coreos(
   }
   class { "epflsti_coreos::private::ssh": }
   class { "epflsti_coreos::private::puppet": }
+  class { "epflsti_coreos::private::ipmi": }
   class { "epflsti_coreos::private::docker": }
   class { "epflsti_coreos::private::etcd2":
       members => $etcd2_quorum_members
@@ -32,7 +33,6 @@ class epflsti_coreos(
   }
 
   if ($::lifecycle_stage == "production") {
-    class { "epflsti_coreos::private::ipmi": }
     class { "epflsti_coreos::private::comfort": }
   }
 }
