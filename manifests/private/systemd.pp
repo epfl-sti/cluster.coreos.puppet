@@ -56,7 +56,8 @@ class epflsti_coreos::private::systemd {
       exec { "Restarting ${name} in systemd":
         command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl reload-or-restart ${name}",
         path => $::path,
-        require => $_file_prereqs
+        subscribe => $_file_prereqs,
+        refreshonly => true
       }
     }
   }
