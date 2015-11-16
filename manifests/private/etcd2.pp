@@ -9,10 +9,10 @@
 # configure a proxy (only knows where the members and masters are;
 # redirects most queries).
 #
-# === Parameters:
+# === Global variables:
 #
-# [*members*]
-#   A dict associating etcd2 quorum member names with their
+# [*etcd2_quorum_members*]
+#   A YAML-encoded dict associating etcd2 quorum member names with their
 #   peer-advertised URLs.
 #
 # === Actions:
@@ -34,18 +34,17 @@
 #   https://github.com/coreos/etcd/blob/master/Documentation/runtime-configuration.md
 # * https://github.com/coreos/etcd/blob/master/Documentation/admin_guide.md
 
-class epflsti_coreos::private::etcd2(
-  $members = undef,
-) {
+class epflsti_coreos::private::etcd2() {
   include ::epflsti_coreos::private::systemd
 
   systemd::unit { "etcd2.service":
     enable => true
   }
 
+  $members = parseyaml($::etcd2_quorum_members)
   validate_hash($members)
 
-  $is_proxy = empty(intersection([$::ipaddress], values($members)))
+  $is_proxy = empty(intersection([$::ipaddress], values($::etcd2_quorum_members)))
 
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
