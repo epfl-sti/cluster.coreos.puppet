@@ -1,7 +1,7 @@
-# Class: epflsti_coreos::ipmi
+# Class: epflsti_coreos::private::ipmi
 #
 # Configure IPMI with a root password and so on.
-class epflsti_coreos::ipmi() {
+class epflsti_coreos::private::ipmi() {
   case $::boardproductname {
     "X7DBT": {
       exec { "Create user root":
