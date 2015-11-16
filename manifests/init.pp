@@ -34,5 +34,7 @@ class epflsti_coreos(
   }
 
   if ($::lifecycle_stage == "production") {
+    # Add classes here that you don't care to test as part of
+    # the bootstrap cycle.
   }
 }
