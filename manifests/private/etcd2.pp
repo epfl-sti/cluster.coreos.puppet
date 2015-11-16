@@ -24,6 +24,12 @@
 #   add" command to inform the already existing members.
 # * Restart failing proxies (poor man's monitoring feature)
 #
+# === Parameters:
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
+#
 # === Bootstrapping:
 #
 # This class is bootstrap-aware.
@@ -34,7 +40,9 @@
 #   https://github.com/coreos/etcd/blob/master/Documentation/runtime-configuration.md
 # * https://github.com/coreos/etcd/blob/master/Documentation/admin_guide.md
 
-class epflsti_coreos::private::etcd2() {
+class epflsti_coreos::private::etcd2(
+  $rootpath = $epflsti_coreos::private::params::rootpath
+) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
   systemd::unit { "etcd2.service":
@@ -52,18 +60,15 @@ class epflsti_coreos::private::etcd2() {
   file { "/etc/systemd/system/etcd2.service.d/20-puppet.conf":
     ensure => "present",
     content => template("epflsti_coreos/20-etcd2.conf.erb")
-  } ~>
-  exec { "restart etcd2":
-    refreshonly => true,
-    path => $path,
-    command => "systemctl restart etcd2"
   }
+
+  $_restart_etcd2_clean = "systemctl stop etcd2.service && rm -rf ${rootpath}/var/lib/etcd2/proxy && systemctl start etcd2.service"
 
   if ($::lifecycle_stage == "production") {
     exec { "reload systemd configuration and start etcd2":
       refreshonly => true,
       path => $::path,
-      command => "systemctl daemon-reload && systemctl restart etcd2.service",
+      command => "systemctl daemon-reload && ${_restart_etcd2_clean}",
       subscribe => File["/etc/systemd/system/etcd2.service.d/20-puppet.conf"]
     }
   }
@@ -73,7 +78,7 @@ class epflsti_coreos::private::etcd2() {
     # https://groups.google.com/d/msg/coreos-user/OuqvJIRAtho/VJ0NMo5BAgAJ
     exec { "restart desynched proxy":
       path => $::path,
-      command => "systemctl stop etcd2.service && rm -rf /opt/root/var/lib/etcd2/proxy && systemctl start etcd2.service",
+      command => $_restart_etcd2_clean,
       onlyif => "/opt/root/bin/etcdctl cluster-health |grep 'zero endpoints'"
     }
   }
