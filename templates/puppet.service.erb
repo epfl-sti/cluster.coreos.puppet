@@ -6,7 +6,7 @@ Requires=docker.service
 [Service]
 ExecStartPre=/bin/bash -c '/usr/bin/docker rm %n || true'
 <% if @has_ipmi %>
-ExecStartPre=/bin/bash -c 'set -e -x; modprobe ipmi_si; rmmod ipmi_devintf; rm -rf /dev/ipmi0; modprobe ipmi_devintf; for i in $(seq 1 100); do test -f /dev/ipmi0 && break; sleep 0.1; done'
+ExecStartPre=/bin/bash -c 'set -e -x; modprobe ipmi_si; rmmod ipmi_devintf || true; rm -rf /dev/ipmi0; modprobe ipmi_devintf; for i in $(seq 1 100); do test -f /dev/ipmi0 && break; sleep 0.1; done'
 <% end %>
 ExecStart=/usr/bin/docker run <% -%>
   --name %n <% -%>
