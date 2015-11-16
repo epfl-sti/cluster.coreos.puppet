@@ -8,31 +8,31 @@ ExecStartPre=/bin/bash -c '/usr/bin/docker rm %n || true'
 <% if @has_ipmi %>
 ExecStartPre=/bin/bash -c 'set -e -x; modprobe ipmi_si; modprobe ipmi_devintf'
 <% end %>
-ExecStart=/usr/bin/docker run \
-  --name %n \
-  --net=host \
-  --privileged \
-  -v /:/opt/root \
-  -v /etc/systemd:/etc/systemd \
-  -v /etc/puppet:/etc/puppet \
-  -v /var/lib/puppet:/var/lib/puppet \
-  -v /home/core:/home/core \
-  -v /etc/os-release:/etc/os-release:ro \
-  -v /etc/lsb-release:/etc/lsb-release:ro \
-  -v /etc/coreos:/etc/coreos:rw \
-  -v /run:/run:ro \
-  -v /usr/bin/systemctl:/usr/bin/systemctl:ro \
-  -v /lib64:/lib64:ro \
-  -v /usr/lib64/systemd:/usr/lib64/systemd \
-  -v /usr/lib/systemd:/usr/lib/systemd \
-  -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-<% if @has_ipmi %>
-  -v /dev/ipmi0:/dev/ipmi0 \
-<% end %>
+ExecStart=/usr/bin/docker run <% -%>
+  --name %n <% -%>
+  --net=host <% -%>
+  --privileged <% -%>
+  -v /:/opt/root <% -%>
+  -v /etc/systemd:/etc/systemd <% -%>
+  -v /etc/puppet:/etc/puppet <% -%>
+  -v /var/lib/puppet:/var/lib/puppet <% -%>
+  -v /home/core:/home/core <% -%>
+  -v /etc/os-release:/etc/os-release:ro <% -%>
+  -v /etc/lsb-release:/etc/lsb-release:ro <% -%>
+  -v /etc/coreos:/etc/coreos:rw <% -%>
+  -v /run:/run:ro <% -%>
+  -v /usr/bin/systemctl:/usr/bin/systemctl:ro <% -%>
+  -v /lib64:/lib64:ro <% -%>
+  -v /usr/lib64/systemd:/usr/lib64/systemd <% -%>
+  -v /usr/lib/systemd:/usr/lib/systemd <% -%>
+  -v /sys/fs/cgroup:/sys/fs/cgroup:ro <% -%>
+<% if @has_ipmi -%>
+  -v /dev/ipmi0:/dev/ipmi0 <% -%>
+<% end -%>
 <% @facts.each do |name, value| -%>
-  -e "FACTER_<%= name %>=<%= value %>" \
-<% end %>
-  epflsti/cluster.coreos.puppet:latest \
+  -e "FACTER_<%= name %>=<%= value %>" <% -%>
+<% end -%>
+  epflsti/cluster.coreos.puppet:latest <% -%>
   agent --no-daemonize --logdest=console --environment=production
 RestartSec=5s
 Restart=always
