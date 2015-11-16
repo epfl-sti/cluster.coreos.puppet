@@ -7,8 +7,8 @@ journalctl -xe
 journalctl -l
 systemctl list-unit-files
 systemctl cat puppet.service
-docker exec puppet.service puppet agent -t
 <% else %>
 journalctl -f -u coreos-bootstrap.service
 systemctl restart coreos-bootstrap.service
 <% end %>
+docker exec puppet.service puppet agent -t
