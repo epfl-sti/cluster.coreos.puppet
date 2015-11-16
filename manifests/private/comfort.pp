@@ -28,9 +28,10 @@ docker exec puppet.service puppet agent -t
   $rootpath = "/opt/root"
   ensure_resource('file',
     ["${rootpath}/opt", "${rootpath}/opt/bin"],
-    {'ensure' => 'directory' }) ->
+    {'ensure' => 'directory' })
   file { "${rootpath}/opt/bin/fleetcheck":
     mode => '0755',
-    content => template("epflsti_coreos/fleetcheck.erb")
+    content => template("epflsti_coreos/fleetcheck.erb"),
+    require => File["${rootpath}/opt/bin"]
   }
 }
