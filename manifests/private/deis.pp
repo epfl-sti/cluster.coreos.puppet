@@ -20,7 +20,6 @@ class epflsti_coreos::private::deis(
 inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
-  $rootpath = "/opt/root"
   ensure_resource('file',
     ["${rootpath}/opt", "${rootpath}/opt/bin"],
     { ensure => "directory" })
