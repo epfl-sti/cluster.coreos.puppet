@@ -8,8 +8,11 @@ journalctl -l
 systemctl list-unit-files
 systemctl cat puppet.service
 docker exec -it puppet-bootstrap.service puppet agent -t
+docker rm -f puppet-bootstrap.service
+/home/core/cluster.coreos.install/install.sh puppet
 <% else %>
 journalctl -f -u coreos-bootstrap.service
 systemctl restart coreos-bootstrap.service
 docker exec -it puppet.service puppet agent -t
+docker rm -f puppet.service
 <% end %>
