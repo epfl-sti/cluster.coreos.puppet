@@ -6,8 +6,12 @@
 #
 # === Parameters:
 #
-# [*ups_hosts*]
-#   A list of short hostnames that have uninterruptible power plugged into them.
+# [*has_ups*]
+#   Whether this host has an Uninterruptible Power Supply
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
 #
 # === Actions:
 #
@@ -16,12 +20,10 @@
 # 
 
 class epflsti_coreos::private::environment(
-  $ups_hosts = []
-) {
-    validate_array($ups_hosts)
+  $has_ups = $epflsti_coreos::private::params::has_ups,
+  $rootpath = $epflsti_coreos::private::params::rootpath
+) inherits epflsti_coreos::private::params {
 
-    $rootpath = "/opt/root"
-    $has_ups = member($ups_hosts, $::hostname)
 
     # Maintain /etc/environment for unit files to source host-specific data from
     file { "$rootpath/etc/environment":

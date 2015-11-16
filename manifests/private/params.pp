@@ -12,6 +12,10 @@
 #   The name of the network interface connected to the Internet, for
 #   gateway nodes (those that have the epflsti_coreos::gateway class
 #   installed); unused for internal nodes
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
 
 class epflsti_coreos::private::params {
   $rootpath = "/opt/root"
@@ -24,4 +28,6 @@ class epflsti_coreos::private::params {
       /enp4s0f1/: { $external_interface = "enp4s0f1" }
       default: { $external_interface = undef }
   }
+
+  $has_ups = member(parseyaml($::ups_hosts), $::hostname)
 }

@@ -4,10 +4,16 @@
 #
 # This class is intended to be loaded on all nodes.
 #
-# === Global variables:
+# === Parameters:
 #
-# [*ups_hosts*]
-#   A YAML-encoded list of short hostnames that have uninterruptible power plugged into them.
+# [*has_ups*]
+#   Whether this host has an Uninterruptible Power Supply
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
+#
+# === Global variables:
 #
 # [*etcd_region*]
 #   The "region=" metadata for fleet
@@ -20,13 +26,12 @@
 #
 # This class is bootstrap-aware.
 
-class epflsti_coreos::private::fleet() {
-    $ups_host_list = parseyaml($::ups_hosts)
-    $region = $::etcd_region
-    validate_array($ups_host_list)
-    validate_string($region)
-
-    $has_ups = member($ups_host_list, $::hostname)
+class epflsti_coreos::private::fleet(
+  $has_ups = $epflsti_coreos::private::params::has_ups,
+  $rootpath = $epflsti_coreos::private::params::rootpath
+) inherits epflsti_coreos::private::params {
+    $etcd_region = $::etcd_region
+    validate_string($etcd_region)
 
     include ::epflsti_coreos::private::systemd
     systemd::unit { "fleet.service":

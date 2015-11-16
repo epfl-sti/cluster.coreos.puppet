@@ -1,4 +1,4 @@
 # This file is managed by Puppet. DO NOT EDIT
 [Service]
 Environment="FLEET_PUBLIC_IP=<%= @ipaddress %>"
-Environment="FLEET_METADATA=region=<%= @region %>,has_ups=<%= @has_ups %>"
+Environment="FLEET_METADATA=region=<%= @etcd_region %>,has_ups=<%= @has_ups %>"
