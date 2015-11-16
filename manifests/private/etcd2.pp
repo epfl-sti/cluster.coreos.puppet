@@ -24,6 +24,10 @@
 #   add" command to inform the already existing members.
 # * Restart failing proxies (poor man's monitoring feature)
 #
+# === Bootstrapping:
+#
+# This class is bootstrap-aware.
+#
 # === See also:
 #
 # * paragraph "Add a New Member" in
@@ -49,11 +53,15 @@ class epflsti_coreos::private::etcd2(
   file { "/etc/systemd/system/etcd2.service.d/20-puppet.conf":
     ensure => "present",
     content => template("epflsti_coreos/20-etcd2.conf.erb")
-  } ~>
-  exec { "reload systemd configuration and start etcd2":
-    refreshonly => true,
-    path => $::path,
-    command => "systemctl daemon-reload && systemctl restart etcd2.service"
+  }
+
+  if ($::lifecycle_stage == "production") {
+    exec { "reload systemd configuration and start etcd2":
+      refreshonly => true,
+      path => $::path,
+      command => "systemctl daemon-reload && systemctl restart etcd2.service",
+      subscribe => File["/etc/systemd/system/etcd2.service.d/20-puppet.conf"]
+    }
   }
 
   if ($is_proxy) {
