@@ -26,8 +26,7 @@ Service=docker.service
 [Install]
 WantedBy=sockets.target
 ",
-    enable => true,
-    start => true
+    enable => true
   } ->
   file { "/etc/systemd/system/docker.service.d":
     ensure => "directory"
