@@ -43,11 +43,10 @@ inherits epflsti_coreos::private::params {
   }
 
   systemd::unit { "ethbr4.netdev":
-    content => join([
-                     "[NetDev]\n",
-                     "Name=ethbr4\n",
-                     "Kind=bridge\n",
-                     ])
+    content => join("[NetDev]
+Name=ethbr4
+Kind=bridge
+")
   }
 
   systemd::unit { "50-ethbr4-internal.network":
