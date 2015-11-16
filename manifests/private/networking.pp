@@ -1,16 +1,32 @@
 # Configure networking pre-bootstrap.
 #
 # The primary physical interface of each CoreOS node is bridged on a
-# bridge called ethbr4 ("Ethernet bridge for IPv4"). This lets Docker
-# containers (most notably, the Foreman / Puppet master) claim an IP
-# address on the internal (RFC1918) IPv4 network. If the container
-# moves, that IP (called a "Virtual IP", or VIP) can stay the same,
-# and the clients will catch up (after their ARP timeout expires) with
-# zero reconfiguration.
+# bridge device called ethbr4 ("Ethernet bridge for IPv4"). This is so
+# that Docker containers (most notably, the Foreman / Puppet master)
+# may claim an IP address on the internal (RFC1918) IPv4 network. If
+# the container moves, that IP (called a "Virtual IP", or VIP) can
+# stay the same, and the clients will catch up (after their ARP
+# timeout expires) with zero reconfiguration.
 #
-# The primary physical interface is set by Foreman's "primary" flag.
-# Non-primary physical interfaces are simply disabled (no DHCPv4 in
-# particular).
+# === Actions:
+#
+# * Set the FQDN in /etc/hostname, as is the CoreOS way
+#
+# * Set up the ethbr4 bridge as explained above, using the
+#   Foreman-specified primary interface and IPv4 address
+#
+# * Set up the default route and DNS server, in a way that lets
+#   gateway.pp override the former seamlessly
+#
+# * Disable DHCPv4 on all physical interfaces, primary or not, so as
+#   to save valuable DHCP address space
+#
+# === Bootstrapping:
+#
+# Although there is no known reason why reconfiguring the network
+# mid-flight on a production system would not work, this has never
+# been tested out of caution; init.pp only invokes this class when
+# $lifecycle_state == "bootstrap".
 class epflsti_coreos::private::networking {
   include ::epflsti_coreos::private::systemd
 
