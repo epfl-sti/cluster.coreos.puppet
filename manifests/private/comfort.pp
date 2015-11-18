@@ -17,7 +17,7 @@ TOOLBOX_DOCKER_TAG=latest
   if ($::lifecycle_stage != "bootstrap") {
     exec { "ensure the toolbox is pulled":
       command => "/usr/bin/true",
-      unless => "/usr/bin/docker pull epflsti/cluster.coreos.toolbox || true"
+      unless => "/usr/bin/env DOCKER_HOST=unix:///opt/root/var/run/docker.sock /opt/root/usr/bin/docker pull epflsti/cluster.coreos.toolbox || true"
     }
   }
 
