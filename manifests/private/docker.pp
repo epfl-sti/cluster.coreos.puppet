@@ -49,7 +49,7 @@ WantedBy=sockets.target
     concat::fragment { "Private Docker registry in /etc/environment":
       order => '40',
       target => "/etc/environment",
-      content => "DOCKER_REGISTRY=${::docker_registry}"
+      content => "DOCKER_REGISTRY=${::docker_registry}\n"
     }
   }
 }
