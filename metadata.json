@@ -2,6 +2,7 @@
   "name": "epflsti-epflsti_coreos",
   "version": "0.0.1",
   "author": "domq",
+  "source": "git@github.com:epfl-sti/cluster.coreos.puppet.git",
   "summary": "CoreOS configuration via Puppet",
   "description": "CoreOS configuration via Puppet",
   "license": "MIT License",
