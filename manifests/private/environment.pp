@@ -31,7 +31,7 @@ class epflsti_coreos::private::environment(
 
     concat::fragment { "machine-dependent /etc/environment":
       target => "/etc/environment",
-      oder => '10',
+      order => '10',
       content => template("epflsti_coreos/environment.erb")
     }
 }
