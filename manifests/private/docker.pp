@@ -44,4 +44,12 @@ WantedBy=sockets.target
       subscribe => File["coreos-docker-private-registry-config"]
     }  
   }
+
+  if ($::docker_registry) {
+    concat::fragment { "Private Docker registry in /etc/environment":
+      order => '40',
+      target => "/etc/environment",
+      content => "DOCKER_REGISTRY=${::docker_registry}"
+    }
+  }
 }
