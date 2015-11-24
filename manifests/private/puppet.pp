@@ -39,7 +39,7 @@ class epflsti_coreos::private::puppet() {
     content => template('epflsti_coreos/puppet-auth.conf.erb')
   }
 
-  if ($::lifecycle_stage == "production" && $::fqdn == "c03.ne.cloud.epfl.ch") {
+  if ($::lifecycle_stage == "production" and $::fqdn == "c03.ne.cloud.epfl.ch") {
     exec { "Restart Puppet":
       command => "systemctl restart puppet.service",
       path => $::path,
