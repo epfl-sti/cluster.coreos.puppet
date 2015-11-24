@@ -9,7 +9,7 @@ pluginsync      = true
 report          = true
 ignoreschedules = true
 daemon          = false
-ca_server       = <%= $::puppet_conf_ca_server %>
-certname        = <%= $::fqdn %>
+ca_server       = <%= @puppet_conf_ca_server %>
+certname        = <%= @fqdn %>
 environment     = production
-server          = <%= $::puppet_conf_server %>
+server          = <%= @puppet_conf_server %>

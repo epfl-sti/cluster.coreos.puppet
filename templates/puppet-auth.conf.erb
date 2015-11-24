@@ -4,7 +4,7 @@
 path /run
 auth any
 method save
-allow <%= $::puppet_conf_server %>
+allow <%= @puppet_conf_server %>
 
 # this one is not stricly necessary, but it has the merit
 # to show the default policy which is deny everything else
