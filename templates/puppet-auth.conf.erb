@@ -1,0 +1,12 @@
+# This file is managed by Puppet.
+
+# Allow puppet run (and Foreman's "run Puppet" button)
+path /run
+auth any
+method save
+allow <%= $::puppet_conf_server %>
+
+# this one is not stricly necessary, but it has the merit
+# to show the default policy which is deny everything else
+path /
+auth any

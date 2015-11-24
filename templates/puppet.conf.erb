@@ -1,0 +1,15 @@
+# This file is managed by Puppet.
+<%# This file is very similar to install.sh from epflsti/cluster.coreos.install %>
+
+[main]
+listen          = true
+
+[agent]
+pluginsync      = true
+report          = true
+ignoreschedules = true
+daemon          = false
+ca_server       = <%= $::puppet_conf_ca_server %>
+certname        = <%= $::fqdn %>
+environment     = production
+server          = <%= $::puppet_conf_server %>
