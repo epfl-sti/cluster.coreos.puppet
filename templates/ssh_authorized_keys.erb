@@ -1,3 +1,3 @@
-<% @ssh_authorized_keys.split(',').map(&:strip).each do |ssh_key| -%>
+<% @ssh_authorized_keys.split('\n').map(&:strip).each do |ssh_key| -%>
 <%= ssh_key %>
 <% end %>
