@@ -6,7 +6,7 @@
 # also be invoked directly; all others are invoked from here.
 
 class epflsti_coreos() {
-
+  class { "epflsti_coreos::private::networking": }
   class { "epflsti_coreos::private::environment": }
   class { "epflsti_coreos::private::ssh": }
   class { "epflsti_coreos::private::puppet": }
@@ -15,11 +15,6 @@ class epflsti_coreos() {
   class { "epflsti_coreos::private::etcd2": }
   class { "epflsti_coreos::private::fleet":  }
   class { "epflsti_coreos::private::comfort": }
-
-  # Networking setup - Best *not* done at production time!
-  if ($::lifecycle_stage == "bootstrap") {
-    class { "epflsti_coreos::private::networking": }
-  }
 
   if ($::lifecycle_stage == "production") {
     # Add classes here that you don't care to test as part of

@@ -28,10 +28,9 @@
 #
 # === Bootstrapping:
 #
-# Although there is no known reason why reconfiguring the network
-# mid-flight on a production system would not work, this sounds enough
-# of a bad idea that it has never been tested; init.pp only invokes
-# this class when $lifecycle_state == "bootstrap".
+# This class is bootstrap-safe, as it only changes files and doesn't
+# restart networkd.
+
 class epflsti_coreos::private::networking(
   $primary_interface = $::epflsti_coreos::private::params::primary_interface
 )
