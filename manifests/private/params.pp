@@ -21,7 +21,7 @@ class epflsti_coreos::private::params {
   $rootpath = "/opt/root"
 
   $primary_interface = inline_template(
-    '<%= @foreman_interfaces.first{|i| i.primary}["identifier"] %>')
+    '<%= @foreman_interfaces.find{|i| i["primary"]}["identifier"] %>')
 
   case $::interfaces {
       /enp1s0f1/: { $external_interface = "enp1s0f1" }
