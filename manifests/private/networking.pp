@@ -52,7 +52,7 @@ Kind=bridge
     content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
-  @foreman_interfaces.each |$interface_obj| {
+  $::foreman_interfaces.each |$interface_obj| {
     $interface_name = $interface_obj["identifier"]
     if ($interface_name == $primary_interface) {
       systemd::unit { "00-${primary_interface}.network":
