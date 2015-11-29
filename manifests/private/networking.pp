@@ -52,8 +52,11 @@ Kind=bridge
     content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
-  systemd::unit { "00-${primary_interface}.network":
-    content => "# Network configuration of ${primary_interface}
+  @foreman_interfaces.each |$interface_obj| {
+    $interface_name = $interface_obj["identifier"]
+    if ($interface_name == $primary_interface) {
+      systemd::unit { "00-${primary_interface}.network":
+        content => "# Network configuration of ${primary_interface}
 #
 # Managed by Puppet, DO NOT EDIT
 #
@@ -64,6 +67,11 @@ Name=${primary_interface}
 DHCP=no
 Bridge=ethbr4
 "
+      }
+    } else {  # $interface_name != $primary_interface
+    systemd::unit { "00-${interface_name}.network":
+      ensure => "absent"
+    }  
   }
 
   systemd::unit { "99-fallback-physical.network":
