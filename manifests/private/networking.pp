@@ -69,9 +69,10 @@ Bridge=ethbr4
 "
       }
     } else {  # $interface_name != $primary_interface
-    systemd::unit { "00-${interface_name}.network":
-      ensure => "absent"
-    }  
+      systemd::unit { "00-${interface_name}.network":
+        ensure => "absent"
+      }
+    }
   }
 
   systemd::unit { "99-fallback-physical.network":
