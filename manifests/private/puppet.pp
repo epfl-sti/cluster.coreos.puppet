@@ -21,6 +21,8 @@ class epflsti_coreos::private::puppet() {
   $facts = {
     lifecycle_stage => "production",
     ipaddress => $::ipaddress,
+    hostname => $::hostname,
+    fqdn => $::fqdn,
     provision_git_id => $::provision_git_id,
     install_sh_version => $::install_sh_version
   }
