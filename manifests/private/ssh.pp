@@ -24,7 +24,9 @@ class epflsti_coreos::private::ssh {
   $rootpath = "/opt/root"
   file { "${rootpath}/home/core/.ssh/authorized_keys":
     ensure => "present",
-    content => template("epflsti_coreos/ssh_authorized_keys.erb")
+    content => template("epflsti_coreos/ssh_authorized_keys.erb"),
+    owner => 500,   # core - but from outside the Docker container
+    group => 500    # core
   }
   file { "${rootpath}/etc/ssh/ssh_config":
     ensure => "file",
