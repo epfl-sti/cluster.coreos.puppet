@@ -5,6 +5,7 @@ Requires=docker.service
 
 [Service]
 ExecStartPre=/bin/bash -c '/usr/bin/docker inspect %n &> /dev/null && /usr/bin/docker rm %n || :'
+ExecStartPre=/bin/rm -f /var/lib/puppet/state/agent_catalog_run.lock
 ExecStart=/usr/bin/docker run \
   --name %n \
   --net=host \
