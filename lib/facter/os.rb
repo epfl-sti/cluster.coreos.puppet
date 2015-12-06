@@ -18,8 +18,15 @@ require 'facter/operatingsystem/osreleaselinux'
 
 module Facter
   module Operatingsystem
+    class << self
+      alias_method :_implementation_orig, :implementation
+    end
     def self.implementation(kernel = Facter.value(:kernel))
+      if File.directory?("/etc/coreos")
         Facter::Operatingsystem::CoreOS.new
+      else
+        self._implementation_orig(kernel = kernel)
+      end
     end
     class CoreOS < OsReleaseLinux
         def get_operatingsystemminorrelease
@@ -28,4 +35,3 @@ module Facter
     end
   end
 end
-
