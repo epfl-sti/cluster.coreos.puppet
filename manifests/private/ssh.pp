@@ -32,4 +32,39 @@ class epflsti_coreos::private::ssh {
     ensure => "file",
     content => template("epflsti_coreos/ssh_config.erb")
   }
+
+  # Share all ssh keys across the cluster
+  # http://serverfault.com/questions/391454/manage-ssh-known-hosts-with-puppet
+  # Requires puppetdb
+  define exported_sshkey(
+    $type = undef,
+    $key = undef
+  ) {
+
+    # "@@" means that that resource is a so-called "exported" resource
+    # (marked as such in puppetdb). Query resources like so (from
+    # the puppetmaster):
+    #
+    #   curl -k -v --cert /var/lib/puppet/ssl/certs/$(hostname -f).pem  \
+    #     --key /var/lib/puppet/ssl/private_keys/$(hostname -f).pem \
+    #     https://$(hostname -f):8081/v3/resources/Sshkey
+    #
+    @@sshkey { "$hostname's $type ssh key":
+      name => $hostname,
+      host_aliases => [$::ipaddress, $::fqdn],
+      ensure => present,
+      type => $type,
+      key  => $key
+    }   
+  }
+
+  exported_sshkey { "${hostname} RSA":
+    type => "rsa",
+    key => $sshrsakey
+  }
+
+  exported_sshkey { "${hostname} DSA":
+    type => "dsa",
+    key => $sshdsakey
+  }
 }
