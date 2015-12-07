@@ -49,22 +49,26 @@ class epflsti_coreos::private::ssh {
     #     --key /var/lib/puppet/ssl/private_keys/$(hostname -f).pem \
     #     https://$(hostname -f):8081/v3/resources/Sshkey
     #
-    @@sshkey { "$hostname's $type ssh key":
-      name => $hostname,
-      host_aliases => [$::ipaddress, $::fqdn],
+    @@sshkey { $name:
+      host_aliases => [$::hostname, $::fqdn, $::ipaddress],
       ensure => present,
       type => $type,
       key  => $key
     }   
   }
 
-  exported_sshkey { "${hostname} RSA":
+  # Note: exported resource names may not contain spaces.
+  exported_sshkey { "ssh-rsa-${::hostname}":
     type => "rsa",
     key => $sshrsakey
   }
 
-  exported_sshkey { "${hostname} DSA":
+  exported_sshkey { "ssh-dsa-${::hostname}":
     type => "dsa",
     key => $sshdsakey
   }
+
+  # Fetch all keys from all hosts!
+  # http://serverfault.com/a/391467/109290
+  Sshkey <<| |>>
 }
