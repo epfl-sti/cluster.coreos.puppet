@@ -68,6 +68,11 @@ class epflsti_coreos::private::ssh {
     key => $sshdsakey
   }
 
+  exported_sshkey { "ssh-ed25519-${::hostname}":
+    type => "ed25519",
+    key => $sshed25519key
+  }
+
   # Fetch all keys from all hosts!
   # http://serverfault.com/a/391467/109290
   Sshkey <<| |>>
