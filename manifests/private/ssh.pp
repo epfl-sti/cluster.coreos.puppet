@@ -11,9 +11,9 @@
 #
 # [*$::ssh_authorized_keys*]
 #
-#   The list of SSH authorized keys, as a comma-separated string. Uses
-#   a global variable so that we can keep using the cloud-config mechanism
-#   for access *during* bootstrap.
+#   The list of SSH authorized keys, as a comma-separated string, for
+#   access as user core. Uses a global variable so that we can keep
+#   using the cloud-config mechanism for access *during* bootstrap.
 #
 # === Actions:
 #
