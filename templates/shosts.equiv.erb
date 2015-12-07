@@ -1,0 +1,3 @@
+<% @ssh_keys.map {|v| v['parameters']['host_aliases']}.uniq.flatten.each do |hostname| -%>
+<%= hostname %>
+<%end -%>
