@@ -18,19 +18,6 @@
 class epflsti_coreos::private::puppet() {
   include ::epflsti_coreos::private::systemd
 
-  $facts = {
-    lifecycle_stage => "production",
-    ipaddress => $::ipaddress,
-    hostname => $::hostname,
-    fqdn => $::fqdn,
-    provision_git_id => $::provision_git_id,
-    install_sh_version => $::install_sh_version
-  }
-
-  systemd::unit { "puppet.service":
-    content => template('epflsti_coreos/puppet.service.erb')
-  }
-
   file { "/etc/puppet/puppet.conf":
     ensure => "present",
     content => template('epflsti_coreos/puppet.conf.erb')
@@ -49,5 +36,20 @@ class epflsti_coreos::private::puppet() {
       subscribe => [File["/etc/puppet/puppet.conf"],
                     File["/etc/puppet/auth.conf"]]
     }
+  }
+
+  # Used in template('epflsti_coreos/puppet.service.erb'):
+  $puppet_docker_tag = "epflsti/cluster.coreos.puppet:latest"
+  $facts = {
+    lifecycle_stage => "production",
+    ipaddress => $::ipaddress,
+    hostname => $::hostname,
+    fqdn => $::fqdn,
+    provision_git_id => $::provision_git_id,
+    install_sh_version => $::install_sh_version
+  }
+
+  systemd::unit { "puppet.service":
+    content => template('epflsti_coreos/puppet.service.erb')
   }
 }

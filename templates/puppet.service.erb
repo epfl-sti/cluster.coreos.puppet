@@ -30,7 +30,7 @@ ExecStart=/usr/bin/docker run <% -%>
 <% @facts.each do |name, value| -%>
   -e "FACTER_<%= name %>=<%= value %>" <% -%>
 <% end -%>
-  epflsti/cluster.coreos.puppet:latest <% -%>
+  <%= @puppet_docker_tag %> <% -%>
   agent --no-daemonize --logdest=console --environment=production
 RestartSec=5s
 Restart=always
