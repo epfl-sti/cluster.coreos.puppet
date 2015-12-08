@@ -1,3 +1,21 @@
-<% @ssh_keys.map {|v| v['parameters']['host_aliases']}.uniq.flatten.each do |hostname| -%>
+<%
+
+def cmp_shosts(a, b)
+  def nameness(name_or_ip)
+    name_or_ip =~ /[^0-9.:]/ ? 10 : 0
+  end
+
+  # Split for the spaceship operator to sort right
+  def split_addr(str)
+    nameness(str) == 10 ? str.split(".") : str.split(".").map { |a| a.to_i }
+  end
+
+  (nameness(b) <=> nameness(a)).nonzero? ||
+  (b.count(".") <=> a.count(".")).nonzero? ||
+  split_addr(a) <=> split_addr(b)
+end
+
+-%>
+<% @ssh_keys.map {|v| v['parameters']['host_aliases']}.flatten.sort {|*shosts| cmp_shosts(*shosts)}.uniq.each do |hostname| -%>
 <%= hostname %>
 <%end -%>
