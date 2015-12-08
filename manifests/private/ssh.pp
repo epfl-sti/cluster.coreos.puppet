@@ -77,11 +77,18 @@ class epflsti_coreos::private::ssh {
   # http://serverfault.com/a/391467/109290
   Sshkey <<| |>>
 
-  # Used by template below:
+  # Used by template ("epflsti_coreos/shosts.equiv.erb") below:
   $ssh_keys = query_resources(false, '@@Sshkey')
 
   file { "/etc/ssh/shosts.equiv":
     ensure => "present",
     content => template("epflsti_coreos/shosts.equiv.erb")
   }
+
+  file { "/etc/ssh/sshd_config":
+    ensure => "present",
+    content => template("epflsti_coreos/sshd_config.erb")
+  }
+  # No need to restart sshd, see
+  # https://coreos.com/os/docs/latest/customizing-sshd.html
 }
