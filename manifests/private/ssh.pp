@@ -77,7 +77,7 @@ class epflsti_coreos::private::ssh {
   # http://serverfault.com/a/391467/109290
   Sshkey <<| |>>
 
-  # Used by template ("epflsti_coreos/shosts.equiv.erb") below:
+  # Used by template("epflsti_coreos/shosts.equiv.erb") below:
   $ssh_keys = query_resources(false, '@@Sshkey')
 
   file { "/etc/ssh/shosts.equiv":
