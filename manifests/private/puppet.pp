@@ -73,7 +73,11 @@ class epflsti_coreos::private::puppet(
   }
 
   # Compute the variables used in template('epflsti_coreos/puppet.service.erb'):
-  $_puppet_docker_version = ($::cluster_coreos_puppet_latest or $::cluster_coreos_puppet_current)
+  if ($::cluster_coreos_puppet_latest) {
+    $_puppet_docker_version = $::cluster_coreos_puppet_latest
+  } else {
+    $_puppet_docker_version = $::cluster_coreos_puppet_current
+  }
 
   if ($_puppet_docker_version) {
     $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:${$_puppet_docker_version}"
