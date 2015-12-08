@@ -4,6 +4,10 @@
 #
 # === Parameters:
 #
+# [*root_path*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
+#
 # [*docker_registry_address*]
 #   The address of the internal Docker registry service, in host:port format
 #
@@ -28,6 +32,7 @@
 # computed as docker-registry.<domain>).
 
 class epflsti_coreos::private::puppet(
+  $root_path                = $::epflsti_coreos::private::params::root_path,
   $docker_registry_address  = $::epflsti_coreos::private::params::docker_registry_address,
   $docker_puppet_image_name = $::epflsti_coreos::private::params::docker_puppet_image_name
   ) inherits epflsti_coreos::private::params {
