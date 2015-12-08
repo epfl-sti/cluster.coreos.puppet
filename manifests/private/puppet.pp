@@ -58,7 +58,7 @@ class epflsti_coreos::private::puppet(
   ###############################################################
 
   # Poor man's crontab
-  file { "/etc/facter/facts.d":
+  file { ["/etc/facter", "/etc/facter/facts.d"]:
     ensure => "directory"
   } ->
   exec { "pull latest ${docker_puppet_image_name} from ${docker_registry_address}":
