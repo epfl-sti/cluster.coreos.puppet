@@ -72,16 +72,26 @@ class epflsti_coreos::private::puppet(
     unless => "${rootpath}/usr/bin/docker pull ${docker_registry_address}/${docker_puppet_image_name}:latest; imagever=$(${rootpath}/usr/bin/docker images -q ${docker_registry_address}/${docker_puppet_image_name}); if [ -n \$imagever ]; then echo cluster_coreos_puppet_latest=\$imagever > /etc/facter/facts.d/cluster_coreos_puppet_latest.txt; fi; exit 0",
   }
 
-  # Used in template('epflsti_coreos/puppet.service.erb'):
-  $puppet_docker_tag = "epflsti/cluster.coreos.puppet:latest"
-  $facts = {
+  # Variables used in template('epflsti_coreos/puppet.service.erb'):
+  if ($::cluster_coreos_puppet_latest) {
+    $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:${::cluster_coreos_puppet_latest}"
+    $extra_facts = {
+      cluster_coreos_puppet_current => $::cluster_coreos_puppet_latest
+    }
+  } else {
+    # Internal registry unreachable or not installed - Use version from the Internets, so as
+    # not to fail the provisioning cycle if bootstrapping.
+    $puppet_docker_tag = "epflsti/cluster.coreos.puppet:latest"
+    $extra_facts = {}
+  }
+  $facts = merge({
     lifecycle_stage => "production",
     ipaddress => $::ipaddress,
     hostname => $::hostname,
     fqdn => $::fqdn,
     provision_git_id => $::provision_git_id,
     install_sh_version => $::install_sh_version
-  }
+  }, $extra_facts)
 
   systemd::unit { "puppet.service":
     content => template('epflsti_coreos/puppet.service.erb')
