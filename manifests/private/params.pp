@@ -3,7 +3,8 @@
 # Variables:
 #
 # [*root_path*]
-#   The path where the root is mounted at.
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
 #
 # [*primary_interface*]
 #   The name of the network interface connected to the internal network
@@ -13,9 +14,11 @@
 #   gateway nodes (those that have the epflsti_coreos::gateway class
 #   installed); unused for internal nodes
 #
-# [*rootpath*]
-#    Where in the Puppet-agent Docker container, the host root is
-#    mounted
+# [*docker_registry_address*]
+#   The address of the internal Docker registry service, in host:port format
+#
+# [*docker_puppet_image_name*]
+#   The (unqualified) image name for Puppet-agent-in-Docker
 
 class epflsti_coreos::private::params {
   $rootpath = "/opt/root"
@@ -30,4 +33,7 @@ class epflsti_coreos::private::params {
   }
 
   $has_ups = member(parseyaml($::ups_hosts), $::hostname)
+
+  $docker_registry_fqdn = "docker-registry.${::domain}:5000"
+  $docker_puppet_image_name = "cluster.coreos.puppet"
 }
