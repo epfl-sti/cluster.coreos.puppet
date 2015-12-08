@@ -72,11 +72,13 @@ class epflsti_coreos::private::puppet(
     unless => "${rootpath}/usr/bin/docker pull ${docker_registry_address}/${docker_puppet_image_name}:latest; imagever=$(${rootpath}/usr/bin/docker images -q ${docker_registry_address}/${docker_puppet_image_name}); if [ -n \$imagever ]; then echo cluster_coreos_puppet_latest=\$imagever > /etc/facter/facts.d/cluster_coreos_puppet_latest.txt; fi; exit 0",
   }
 
-  # Variables used in template('epflsti_coreos/puppet.service.erb'):
-  if ($::cluster_coreos_puppet_latest) {
-    $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:${::cluster_coreos_puppet_latest}"
+  # Compute the variables used in template('epflsti_coreos/puppet.service.erb'):
+  $_puppet_docker_version = $::cluster_coreos_puppet_latest || $::cluster_coreos_puppet_current
+
+  if ($_puppet_docker_version) {
+    $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:${$_puppet_docker_version}"
     $extra_facts = {
-      cluster_coreos_puppet_current => $::cluster_coreos_puppet_latest
+      cluster_coreos_puppet_current => $_puppet_docker_version
     }
   } else {
     # Internal registry unreachable or not installed - Use version from the Internets, so as
