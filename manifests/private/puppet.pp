@@ -4,7 +4,7 @@
 #
 # === Parameters:
 #
-# [*root_path*]
+# [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
@@ -32,7 +32,7 @@
 # computed as docker-registry.<domain>).
 
 class epflsti_coreos::private::puppet(
-  $root_path                = $::epflsti_coreos::private::params::root_path,
+  $rootpath                = $::epflsti_coreos::private::params::rootpath,
   $docker_registry_address  = $::epflsti_coreos::private::params::docker_registry_address,
   $docker_puppet_image_name = $::epflsti_coreos::private::params::docker_puppet_image_name
   ) inherits epflsti_coreos::private::params {
@@ -69,7 +69,7 @@ class epflsti_coreos::private::puppet(
   exec { "pull latest ${docker_puppet_image_name} from ${docker_registry_address}":
     path => $::path,
     command => "true",
-    unless => "${root_path}/usr/bin/docker pull ${docker_registry_address}/${docker_puppet_image_name}:latest; imagever=$(${root_path}/usr/bin/docker images -q ${docker_registry_address}/${docker_puppet_image_name}); if [ -n $imagever ]; then echo cluster_coreos_puppet_latest=$imagever > /etc/facter/facts.d/cluster_coreos_puppet_latest.txt; fi; exit 0",
+    unless => "${rootpath}/usr/bin/docker pull ${docker_registry_address}/${docker_puppet_image_name}:latest; imagever=$(${rootpath}/usr/bin/docker images -q ${docker_registry_address}/${docker_puppet_image_name}); if [ -n $imagever ]; then echo cluster_coreos_puppet_latest=$imagever > /etc/facter/facts.d/cluster_coreos_puppet_latest.txt; fi; exit 0",
   }
 
   # Used in template('epflsti_coreos/puppet.service.erb'):

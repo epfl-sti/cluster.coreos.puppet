@@ -2,7 +2,7 @@
 #
 # Variables:
 #
-# [*root_path*]
+# [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
