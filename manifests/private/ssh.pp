@@ -86,7 +86,7 @@ class epflsti_coreos::private::ssh {
   }
 
   file { "/etc/ssh/sshd_config":
-    ensure => "present",
+    ensure => "file",  # Erase CoreOS-provided symlink
     content => template("epflsti_coreos/sshd_config.erb")
   }
   # No need to restart sshd, see
