@@ -2,16 +2,25 @@
 #
 # Special docker tweaks for EPFL-STI clusters
 #
+# === Parameters:
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
+#
 # === Actions:
 #
 # * Add select flags to the command line of all dockerd's
 # * Restart the Docker daemon, except when bootstrapping
+# * Download /opt/bin/pipework from GitHub
 #
 # === Bootstrapping:
 #
 # This class is bootstrap-aware.
 
-class epflsti_coreos::private::docker() {
+class epflsti_coreos::private::docker(
+  $rootpath                = $::epflsti_coreos::private::params::rootpath
+) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
   systemd::unit { "docker-tcp.socket":
@@ -51,5 +60,11 @@ WantedBy=sockets.target
       target => "/etc/environment",
       content => "DOCKER_REGISTRY=${::docker_registry}\n"
     }
+  }
+
+  exec { "Download /opt/bin/pipework":
+    path => $::path,
+    command => "curl -o ${rootpath}/opt/bin/pipework https://raw.githubusercontent.com/jpetazzo/pipework/master/pipework && chmod a+x ${rootpath}/opt/bin/pipework",
+    creates => "${rootpath}/opt/bin/pipework"
   }
 }
