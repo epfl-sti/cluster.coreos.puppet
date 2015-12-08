@@ -6,6 +6,7 @@ RUN apk upgrade --update --available && \
     apk add \
       ca-certificates \
       openssl=1.0.1q-r0 \
+      curl \
       ruby \
       util-linux \
       shadow \
