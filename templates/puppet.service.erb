@@ -17,6 +17,7 @@ ExecStart=/usr/bin/docker run <% -%>
   -v /etc/ssh:/etc/ssh <% -%>
   -v /etc/puppet:/etc/puppet <% -%>
   -v /var/lib/puppet:/var/lib/puppet <% -%>
+  -v /var/run/docker.sock:/var/run/docker.sock <% -%>
   -v /home/core:/home/core <% -%>
   -v /etc/os-release:/etc/os-release:ro <% -%>
   -v /etc/lsb-release:/etc/lsb-release:ro <% -%>
