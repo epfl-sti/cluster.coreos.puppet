@@ -38,31 +38,31 @@ class epflsti_coreos::private::ssh {
     content => template("epflsti_coreos/ssh_config.erb")
   }
 
+  # Share all ssh keys across the cluster
+  # http://serverfault.com/questions/391454/manage-ssh-known-hosts-with-puppet
+  # Requires puppetdb
+
+  define exported_sshkey(
+    $type = undef,
+    $key = undef
+  ) {
+    # "@@" means that that resource is a so-called "exported" resource
+    # (marked as such in puppetdb). Query resources like so (from
+    # the puppetmaster):
+    #
+    #   curl -k -v --cert /var/lib/puppet/ssl/certs/$(hostname -f).pem  \
+    #     --key /var/lib/puppet/ssl/private_keys/$(hostname -f).pem \
+    #     https://$(hostname -f):8081/v3/resources/Sshkey
+    #
+    @@sshkey { $name:
+      host_aliases => [$::hostname, $::fqdn, $::ipaddress],
+      ensure => present,
+      type => $type,
+      key  => $key
+    }   
+  }
+
   if ($lifecycle_stage == "production") {
-    # Share all ssh keys across the cluster
-    # http://serverfault.com/questions/391454/manage-ssh-known-hosts-with-puppet
-    # Requires puppetdb
-    define exported_sshkey(
-      $type = undef,
-      $key = undef
-    ) {
-
-      # "@@" means that that resource is a so-called "exported" resource
-      # (marked as such in puppetdb). Query resources like so (from
-      # the puppetmaster):
-      #
-      #   curl -k -v --cert /var/lib/puppet/ssl/certs/$(hostname -f).pem  \
-      #     --key /var/lib/puppet/ssl/private_keys/$(hostname -f).pem \
-      #     https://$(hostname -f):8081/v3/resources/Sshkey
-      #
-      @@sshkey { $name:
-        host_aliases => [$::hostname, $::fqdn, $::ipaddress],
-        ensure => present,
-        type => $type,
-        key  => $key
-      }   
-    }
-
     # Note: exported resource names may not contain spaces.
     exported_sshkey { "ssh-rsa-${::hostname}":
       type => "rsa",
