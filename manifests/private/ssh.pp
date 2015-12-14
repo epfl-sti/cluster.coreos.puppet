@@ -18,8 +18,13 @@
 # === Actions:
 #
 # * Update /home/core/.ssh/authorized_keys
-# * Set sane /etc/ssh/ssh_config
+# * Set sane /etc/ssh/ssh_config (steady-state only, not at bootstrap time)
 #
+# === Bootstrapping:
+#
+# This class is bootstrap-aware; only the bare minimum
+# (/home/core/.ssh/authorized_keys) happens at bootstrap time
+  
 class epflsti_coreos::private::ssh {
   $rootpath = "/opt/root"
   file { "${rootpath}/home/core/.ssh/authorized_keys":
@@ -33,62 +38,64 @@ class epflsti_coreos::private::ssh {
     content => template("epflsti_coreos/ssh_config.erb")
   }
 
-  # Share all ssh keys across the cluster
-  # http://serverfault.com/questions/391454/manage-ssh-known-hosts-with-puppet
-  # Requires puppetdb
-  define exported_sshkey(
-    $type = undef,
-    $key = undef
-  ) {
+  if ($lifecycle_stage == "production") {
+    # Share all ssh keys across the cluster
+    # http://serverfault.com/questions/391454/manage-ssh-known-hosts-with-puppet
+    # Requires puppetdb
+    define exported_sshkey(
+      $type = undef,
+      $key = undef
+    ) {
 
-    # "@@" means that that resource is a so-called "exported" resource
-    # (marked as such in puppetdb). Query resources like so (from
-    # the puppetmaster):
-    #
-    #   curl -k -v --cert /var/lib/puppet/ssl/certs/$(hostname -f).pem  \
-    #     --key /var/lib/puppet/ssl/private_keys/$(hostname -f).pem \
-    #     https://$(hostname -f):8081/v3/resources/Sshkey
-    #
-    @@sshkey { $name:
-      host_aliases => [$::hostname, $::fqdn, $::ipaddress],
-      ensure => present,
-      type => $type,
-      key  => $key
-    }   
+      # "@@" means that that resource is a so-called "exported" resource
+      # (marked as such in puppetdb). Query resources like so (from
+      # the puppetmaster):
+      #
+      #   curl -k -v --cert /var/lib/puppet/ssl/certs/$(hostname -f).pem  \
+      #     --key /var/lib/puppet/ssl/private_keys/$(hostname -f).pem \
+      #     https://$(hostname -f):8081/v3/resources/Sshkey
+      #
+      @@sshkey { $name:
+        host_aliases => [$::hostname, $::fqdn, $::ipaddress],
+        ensure => present,
+        type => $type,
+        key  => $key
+      }   
+    }
+
+    # Note: exported resource names may not contain spaces.
+    exported_sshkey { "ssh-rsa-${::hostname}":
+      type => "rsa",
+      key => $sshrsakey
+    }
+
+    exported_sshkey { "ssh-dsa-${::hostname}":
+      type => "dsa",
+      key => $sshdsakey
+    }
+
+    exported_sshkey { "ssh-ed25519-${::hostname}":
+      type => "ed25519",
+      key => $sshed25519key
+    }
+
+    # Fetch all keys from all hosts!
+    # http://serverfault.com/a/391467/109290
+    Sshkey <<| |>>
+
+    # Used by template("epflsti_coreos/shosts.equiv.erb") below:
+    $ssh_keys = query_resources(false, '@@Sshkey')
+
+    file { "/etc/ssh/shosts.equiv":
+      ensure => "present",
+      content => template("epflsti_coreos/shosts.equiv.erb")
+    }
+
+    file { "/etc/ssh/sshd_config":
+      ensure => "file",  # Erase CoreOS-provided symlink
+      content => template("epflsti_coreos/sshd_config.erb")
+    }
+    # No need to restart sshd, see
+    # https://coreos.com/os/docs/latest/customizing-sshd.html
   }
-
-  # Note: exported resource names may not contain spaces.
-  exported_sshkey { "ssh-rsa-${::hostname}":
-    type => "rsa",
-    key => $sshrsakey
-  }
-
-  exported_sshkey { "ssh-dsa-${::hostname}":
-    type => "dsa",
-    key => $sshdsakey
-  }
-
-  exported_sshkey { "ssh-ed25519-${::hostname}":
-    type => "ed25519",
-    key => $sshed25519key
-  }
-
-  # Fetch all keys from all hosts!
-  # http://serverfault.com/a/391467/109290
-  Sshkey <<| |>>
-
-  # Used by template("epflsti_coreos/shosts.equiv.erb") below:
-  $ssh_keys = query_resources(false, '@@Sshkey')
-
-  file { "/etc/ssh/shosts.equiv":
-    ensure => "present",
-    content => template("epflsti_coreos/shosts.equiv.erb")
-  }
-
-  file { "/etc/ssh/sshd_config":
-    ensure => "file",  # Erase CoreOS-provided symlink
-    content => template("epflsti_coreos/sshd_config.erb")
-  }
-  # No need to restart sshd, see
-  # https://coreos.com/os/docs/latest/customizing-sshd.html
 }
