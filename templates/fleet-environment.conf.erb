@@ -1,4 +1,14 @@
 # This file is managed by Puppet. DO NOT EDIT
 [Service]
 Environment="FLEET_PUBLIC_IP=<%= @ipaddress %>"
-Environment="FLEET_METADATA=region=<%= @etcd_region %>,has_ups=<%= @has_ups %>"
+<%
+  metadata = { "region" => @etcd_region, "has_ups" => @has_ups }
+  # TODO: query PuppetDB to find out the list of existing CoreOS versions!
+  for milestone in [717, 723, 766, 835, 877]
+    if Integer(@operatingsystemmajrelease) >= milestone
+      metadata["coreos#{milestone}ornewer"] = 1
+    end
+  end
+  metadata_as_env = metadata.map { |k, v| "#{k}=#{v}" }.join(",")
+-%>
+Environment="FLEET_METADATA=<%= metadata_as_env %>"
