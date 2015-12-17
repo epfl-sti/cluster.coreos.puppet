@@ -68,8 +68,8 @@ class epflsti_coreos::private::puppet(
   } ->
   exec { "pull latest ${docker_puppet_image_name} from ${docker_registry_address}":
     path => $::path,
-    command => "true",
-    unless => "${rootpath}/usr/bin/docker pull ${docker_registry_address}/${docker_puppet_image_name}:latest; imagever=$(${rootpath}/usr/bin/docker images -q ${docker_registry_address}/${docker_puppet_image_name}); if [ -n \"\$imagever\" ]; then echo cluster_coreos_puppet_latest=\"\$imagever\" > /etc/facter/facts.d/cluster_coreos_puppet_latest.txt; fi; exit 0",
+    command => "false",
+    unless => template('epflsti_coreos/docker_pull_puppet.sh'),
   }
 
   # Compute the variables used in template('epflsti_coreos/puppet.service.erb'):
