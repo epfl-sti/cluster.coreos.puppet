@@ -37,14 +37,14 @@ class epflsti_coreos() {
     class { "epflsti_coreos::private::environment": }
     class { "epflsti_coreos::private::docker": }
     class { "epflsti_coreos::private::etcd2":  }
-  }
 
-  ######################## THE FINISHING TOUCH #########################
-  # Don't join the Fleet cluster until everything else is set up.
-  stage { "production-ready":
-    require => Stage["main"]
-  }
-  class { "epflsti_coreos::private::fleet":
-    stage => "production-ready"
+    ######################## THE FINISHING TOUCH #########################
+    # Don't join the Fleet cluster until everything else is set up.
+    stage { "production-ready":
+      require => Stage["main"]
+    }
+    class { "epflsti_coreos::private::fleet":
+      stage => "production-ready"
+    }
   }
 }
