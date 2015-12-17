@@ -29,6 +29,10 @@ class epflsti_coreos::private::fleet(
     $etcd_region = $::etcd_region
     validate_string($etcd_region)
 
+    # For template("epflsti_coreos/fleet-environment.conf.erb"):
+    $coreos_releases = unique(values(
+      query_facts("Class[epflsti_coreos]", ["operatingsystemmajrelease"])))
+
     include ::epflsti_coreos::private::systemd
     systemd::unit { "fleet.service":
       enable => true,
