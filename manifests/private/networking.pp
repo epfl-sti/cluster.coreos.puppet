@@ -8,6 +8,10 @@
 # stay the same, and the clients will catch up (after their ARP
 # timeout expires) with zero reconfiguration.
 #
+# Note that gateway nodes receive an additional layer of network
+# configuration; see ../gateway.pp. The interaction between the
+# two is managed using networkd's cascading preferences mechanism.
+#
 # === Actions:
 #
 # * Set the FQDN in /etc/hostname, as is the CoreOS way

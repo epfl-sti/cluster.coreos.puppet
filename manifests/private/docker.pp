@@ -64,7 +64,7 @@ WantedBy=sockets.target
 
   exec { "Download /opt/bin/pipework":
     path => $::path,
-    command => "curl -o ${rootpath}/opt/bin/pipework https://raw.githubusercontent.com/jpetazzo/pipework/master/pipework && chmod a+x ${rootpath}/opt/bin/pipework",
+    command => "ls -l ${rootpath}/opt/bin/pipework; set -e -x; exec > ${rootpath}/tmp/log 2>&1; curl -o ${rootpath}/opt/bin/pipework https://raw.githubusercontent.com/jpetazzo/pipework/master/pipework && chmod a+x ${rootpath}/opt/bin/pipework",
     creates => "${rootpath}/opt/bin/pipework"
   }
 }

@@ -7,26 +7,21 @@
 # except you can add / remove administrators without reinstalling the
 # entire fleet.
 #
-# === Global Variables:
+# === Variables:
 #
-# [*$::ssh_authorized_keys*]
-#
-#   The list of SSH authorized keys, as a comma-separated string, for
-#   access as user core. Uses a global variable so that we can keep
-#   using the cloud-config mechanism for access *during* bootstrap.
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
 #
 # === Actions:
 #
 # * Update /home/core/.ssh/authorized_keys
+#
 # * Set sane /etc/ssh/ssh_config (steady-state only, not at bootstrap time)
 #
-# === Bootstrapping:
-#
-# This class is bootstrap-aware; only the bare minimum
-# (/home/core/.ssh/authorized_keys) happens at bootstrap time
-  
-class epflsti_coreos::private::ssh {
-  $rootpath = "/opt/root"
+class epflsti_coreos::private::ssh(
+  $rootpath = $epflsti_coreos::private::params::rootpath
+) inherits epflsti_coreos::private::params {
   file { "${rootpath}/home/core/.ssh/authorized_keys":
     ensure => "present",
     content => template("epflsti_coreos/ssh_authorized_keys.erb"),

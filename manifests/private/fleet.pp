@@ -21,10 +21,6 @@
 # === Actions:
 #
 # * Alter the fleet configuration to set its public IP and metadata
-# 
-# === Bootstrapping:
-#
-# This class is bootstrap-aware.
 
 class epflsti_coreos::private::fleet(
   $has_ups = $epflsti_coreos::private::params::has_ups,
@@ -47,7 +43,6 @@ class epflsti_coreos::private::fleet(
     } ~>
     exec { "restart fleetd":
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart fleet.service",
-      refreshonly => true,
-      unless => "/usr/bin/test '${::lifecycle_stage}' = bootstrap"
+      refreshonly => true
     }
 }
