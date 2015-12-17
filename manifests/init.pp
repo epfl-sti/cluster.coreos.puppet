@@ -40,6 +40,9 @@ class epflsti_coreos() {
 
     ######################## THE FINISHING TOUCH #########################
     # Don't join the Fleet cluster until everything else is set up.
+    # Note: the Puppet update dance may yet restart Puppet (but not Docker,
+    # since exec { "restart docker in host": } in docker.pp is guaranteed
+    # never to complete if invoked)
     stage { "production-ready":
       require => Stage["main"]
     }
