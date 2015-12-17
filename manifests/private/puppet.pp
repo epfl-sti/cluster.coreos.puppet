@@ -100,6 +100,7 @@ class epflsti_coreos::private::puppet(
   }, $extra_facts)
 
   systemd::unit { "puppet.service":
-    content => template('epflsti_coreos/puppet.service.erb')
+    content => template('epflsti_coreos/puppet.service.erb'),
+    start => ($::lifecycle_stage == "production")
   }
 }
