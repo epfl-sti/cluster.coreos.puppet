@@ -12,6 +12,7 @@ if [ -z "$imagever" ] ; then
   imagever="$(docker images | grep "$pullfrom" | awk '{if ($2 == "latest") {print $3}}')"
 fi
 if [ -n "$imagever" ]; then
+  mkdir -p /etc/facter/facts.d
   echo cluster_coreos_puppet_latest="$imagever" > /etc/facter/facts.d/cluster_coreos_puppet_latest.txt
 fi
 exit 0
