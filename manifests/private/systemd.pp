@@ -50,9 +50,7 @@ class epflsti_coreos::private::systemd {
         }  
       }
   
-      if ($::lifecycle_stage == "bootstrap") {
-        $_do_start = false
-      } elsif ($start == undef) {
+      if ($start == undef) {
         $_do_start = $_kind == "service"
       } else {
         $_do_start = $start

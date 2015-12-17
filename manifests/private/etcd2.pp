@@ -30,10 +30,6 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
-# === Bootstrapping:
-#
-# This class is bootstrap-aware.
-#
 # === See also:
 #
 # * paragraph "Add a New Member" in
@@ -64,13 +60,11 @@ class epflsti_coreos::private::etcd2(
 
   $_restart_etcd2_clean = "systemctl stop etcd2.service && rm -rf ${rootpath}/var/lib/etcd2/proxy && systemctl start etcd2.service"
 
-  if ($::lifecycle_stage == "production") {
-    exec { "reload systemd configuration and start etcd2":
-      refreshonly => true,
-      path => $::path,
-      command => "systemctl daemon-reload && ${_restart_etcd2_clean}",
-      subscribe => File["/etc/systemd/system/etcd2.service.d/20-puppet.conf"]
-    }
+  exec { "reload systemd configuration and start etcd2":
+    refreshonly => true,
+    path => $::path,
+    command => "systemctl daemon-reload && ${_restart_etcd2_clean}",
+    subscribe => File["/etc/systemd/system/etcd2.service.d/20-puppet.conf"]
   }
 
   if ($is_proxy) {

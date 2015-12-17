@@ -45,12 +45,9 @@ inherits epflsti_coreos::private::params {
      "scheduler-policy.json", "deis-debug-logs"]:
   }
 
-  if ($::lifecycle_stage != "bootstrap") {
-    file { ["${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
-      ensure => "directory",
-    }
-    run_deis_bin_script { ["get_image", "preseed"]: }
-  }
+  file { ["${rootpath}/run/deis", "${rootpath}/run/deis/bin"]:
+    ensure => "directory",
+  } -> run_deis_bin_script { ["get_image", "preseed"]: }
 
   private::systemd::unit { "graceful-deis-shutdown.service":
     content => template('epflsti_coreos/deis/graceful-deis-shutdown.service.erb'),

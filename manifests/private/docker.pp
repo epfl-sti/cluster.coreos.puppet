@@ -13,10 +13,6 @@
 # * Add select flags to the command line of all dockerd's
 # * Restart the Docker daemon, except when bootstrapping
 # * Download /opt/bin/pipework from GitHub
-#
-# === Bootstrapping:
-#
-# This class is bootstrap-aware.
 
 class epflsti_coreos::private::docker(
   $rootpath                = $::epflsti_coreos::private::params::rootpath
@@ -44,14 +40,11 @@ WantedBy=sockets.target
     ensure => "present",
     content => template("epflsti_coreos/docker.conf.erb"),
     alias => "coreos-docker-private-registry-config"
-  }
-  if ($::lifecycle_stage != "bootstrap") {
-    exec { "restart docker in host":
-      command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart docker.service",
-      path => $::path,
-      refreshonly => true,
-      subscribe => File["coreos-docker-private-registry-config"]
-    }  
+  } ~>
+  exec { "restart docker in host":
+    command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart docker.service",
+    path => $::path,
+    refreshonly => true,
   }
 
   if ($::docker_registry) {
