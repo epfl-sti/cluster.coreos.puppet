@@ -41,8 +41,14 @@ class epflsti_coreos::private::etcd2(
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
+  systemd::unit { "etcd.service":
+    mask => true,
+    start => false
+  }
+
   systemd::unit { "etcd2.service":
-    enable => true
+    enable => true,
+    start => true
   }
 
   $members = parseyaml($::etcd2_quorum_members)

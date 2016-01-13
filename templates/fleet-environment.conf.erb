@@ -1,4 +1,14 @@
 # This file is managed by Puppet. DO NOT EDIT
 [Service]
 Environment="FLEET_PUBLIC_IP=<%= @ipaddress %>"
-Environment="FLEET_METADATA=region=<%= @etcd_region %>,has_ups=<%= @has_ups %>"
+<%
+  metadata = { "region" => @etcd_region, "has_ups" => @has_ups }
+  coreos_releases = @coreos_releases.map { |d| Integer(d.values[0]) }.sort
+  for milestone in coreos_releases
+    if Integer(@operatingsystemmajrelease) >= milestone
+      metadata["coreos#{milestone}ornewer"] = 1
+    end
+  end
+  metadata_as_env = metadata.map { |k, v| "#{k}=#{v}" }.join(",")
+-%>
+Environment="FLEET_METADATA=<%= metadata_as_env %>"
