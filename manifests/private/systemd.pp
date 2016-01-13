@@ -115,7 +115,7 @@ class epflsti_coreos::private::systemd {
       }
     }
 
-    if ($kind == "service") {
+    if ($_kind == "service") {
       if ($start == undef) {
         Anchor["systemd::unit_${name}::reloaded"] ~>
         exec { "Reloading systemd ${name}":
