@@ -132,7 +132,7 @@ class epflsti_coreos::private::systemd {
         exec { "Starting systemd ${name}":
           command => "systemctl reload-or-restart ${name}",
           path => $::path,
-          unless => "test $(systemctl is-active ${name}) = 'inactive'"
+          unless => "test $(systemctl is-active ${name}) = 'active'"
         }
       } else {
         exec { "Stopping systemd ${name}":
