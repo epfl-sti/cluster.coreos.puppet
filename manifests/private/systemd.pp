@@ -66,7 +66,12 @@ class epflsti_coreos::private::systemd {
         command => "systemctl mask ${name}",
         unless => "test $(systemctl is-enabled ${name} 2>/dev/null) = 'masked'",
         path => $::path
-      } ~> Anchor["systemd::unit_${name}::reloaded"]
+      } ~> Anchor["systemd::unit_${name}::reloaded"] ->
+      exec { "Resetting failure state of systemd ${name}":
+        command => "systemctl reset-failed ${name}",
+        onlyif => "systemctl is-failed --quiet ${name}",
+        path => $::path
+      }
     } elsif ($content != undef or ($mask != undef and ! $mask)) {
       exec { "Unmasking systemd ${name}":
         command => "systemctl unmask ${name}",
