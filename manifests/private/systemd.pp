@@ -95,12 +95,14 @@ class epflsti_coreos::private::systemd {
     }
   
     if ($_do_enable) {
+      Anchor["systemd::unit_${name}::reloaded"] ->
       exec { "Enabling systemd ${name}":
         command => "systemctl enable ${name}",
         path => $::path,
         unless => "test $(/usr/bin/systemctl is-enabled ${name}) = 'enabled'"
       }
     } elsif ($enable != undef and ! $enable) {
+      Anchor["systemd::unit_${name}::reloaded"] ->
       exec { "Disabling systemd ${name}":
         command => "systemctl disable ${name}",
         path => $::path,
