@@ -14,38 +14,13 @@
 # one of the gateways is the *active gateway* and is set up for
 # outgoing traffic and NAT (see Actions: below).
 # 
-#
 # === Parameters:
-#
-# [*external_address*]
-#   The fixed, presumably publicly routable IPv4 address that this
-#   host should respond to. If undef, $external_interface,
-#   $external_gateway and $external_netmask are ignored.
-#
-# [*external_interface*]
-#   The physical that should have address $external_address.
-#
-# [*external_gateway*]
-#   IP address of the network gateway, as seen from the internal network
-#
-# [*external_netmask*]
-#   The netmask for the external network.
-#
-# [*is_active*]
-#   True iff this host should act as the gateway for the internal network
-#   (by setting up a gateway alias IP address at $::gateway_vip, and masquerading
-#   in iptables).
-#   TODO: this should be moved to a heartbeat rig. The changes caused
-#   by this variable (see Actions: below) are not persistent for that
-#   reason.
-#
-# === Parameters:
-#
-# [*external_interface*]
-#   The name of the network interface connected to the Internet#
 #
 # [*external_address*]
 #   IPv4 address on the external network
+#
+# [*external_interface*]
+#   The name of the network interface connected to the Internet#
 #
 # [*external_netmask*]
 #   IPv4 netmask on the external network
