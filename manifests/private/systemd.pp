@@ -110,7 +110,7 @@ class epflsti_coreos::private::systemd {
       exec { "Enabling systemd ${name}":
         command => "systemctl enable ${name}",
         path => $::path,
-        unless => "test $(/usr/bin/systemctl is-enabled ${name}) = 'enabled'"
+        unless => "systemctl is-enabled ${name} |grep -q -E 'enabled|static'"
       }
     } elsif ($enable != undef and ! $enable) {
       Anchor["systemd::unit_${name}::reloaded"] ->
