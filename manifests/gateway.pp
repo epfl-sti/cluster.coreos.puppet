@@ -42,6 +42,14 @@
 #   at provisioning time. The gateway that ${is_active} sets up this IP
 #   as an alias for itself, and enables routing and masquerading.
 #
+# [*$::cluster_owner*]
+#   The prefix to set as the name to the haproxy Docker job
+#
+# [*$::public_web_domain*]
+#   The domain in which all host names resolve to the public IP of
+#   the cluster. Either set a wildcard CN in a domain you own, or
+#   use 93.184.216.34.xip.io
+#
 # === Actions:
 #
 # If $external_address is set, this class overrides the network
@@ -60,6 +68,8 @@ class epflsti_coreos::gateway(
   $external_netmask = undef,
   $is_active = undef
 ) inherits epflsti_coreos::private::params {
+  include ::epflsti_coreos::private::systemd
+
   exec { "restart networkd in host":
     command => "/usr/bin/systemctl restart systemd-networkd.service",
     refreshonly => true
@@ -94,6 +104,12 @@ class epflsti_coreos::gateway(
       command => "/sbin/ip route del default dev ${external_interface}",
       onlyif => "/sbin/ip route show dev ${external_interface} | grep -q ^default"
     }
+  }
+
+  private::systemd::unit { "${::cluster_owner}.haproxy.service":
+    # Uses $::public_web_domain
+    content => template('epflsti_coreos/haproxy.service.erb'),
+    start => ($::lifecycle_stage == "production")
   }
 
   if ($is_active) {
