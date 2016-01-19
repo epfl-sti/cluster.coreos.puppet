@@ -63,7 +63,7 @@ class epflsti_coreos::private::systemd {
       anchor { "systemd::unit_${name}::reloaded": }
   
       exec { "systemctl-daemon-reload for ${name}":
-        command => 'systemctl daemon-reload || true',
+        command => 'systemctl daemon-reload',
         path => $::path,
         refreshonly => true
       }
