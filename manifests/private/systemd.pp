@@ -54,11 +54,17 @@ class epflsti_coreos::private::systemd {
 
     $_systemd_unit_file = "/etc/systemd/${_subdir}/${name}"
 
+    exec { "systemctl-daemon-reload for ${name}":
+      command => 'systemctl daemon-reload',
+      path => $::path,
+      refreshonly => true
+    }
+
     if ($ensure == "absent") {
       file { $_systemd_unit_file:
         ensure => "absent"
       } ~>
-      Exec['systemctl-daemon-reload'] ~>
+      Exec["systemctl-daemon-reload for ${name}"] ~>
       Anchor["systemd::unit_${name}::reloaded"]
     }
     elsif ($mask != undef and $mask) {
@@ -83,7 +89,7 @@ class epflsti_coreos::private::systemd {
         file { $_systemd_unit_file:
           content => $content
         } ~>
-        Exec['systemctl-daemon-reload'] ~>
+        Exec["systemctl-daemon-reload for ${name}"] ~>
         Anchor["systemd::unit_${name}::reloaded"]
       } else {
         Exec["Unmasking systemd ${name}"] ~>
