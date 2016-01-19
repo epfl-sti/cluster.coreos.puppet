@@ -35,8 +35,6 @@ class epflsti_coreos::private::systemd {
     $start = undef,
     $mask = undef
   ) {
-    include ::systemd
-  
     if ($name =~ /\.(service)$/) {
       $_kind = "service"
       $_subdir = "system"
@@ -50,52 +48,7 @@ class epflsti_coreos::private::systemd {
       fail("Cannot determine unit type for ${name}")
     }
 
-    anchor { "systemd::unit_${name}::reloaded": }
-
     $_systemd_unit_file = "/etc/systemd/${_subdir}/${name}"
-
-    exec { "systemctl-daemon-reload for ${name}":
-      command => 'systemctl daemon-reload',
-      path => $::path,
-      refreshonly => true
-    }
-
-    if ($ensure == "absent") {
-      file { $_systemd_unit_file:
-        ensure => "absent"
-      } ~>
-      Exec["systemctl-daemon-reload for ${name}"] ~>
-      Anchor["systemd::unit_${name}::reloaded"]
-    }
-    elsif ($mask != undef and $mask) {
-      exec { "Masking systemd ${name}":
-        command => "systemctl mask ${name}",
-        unless => "test $(systemctl is-enabled ${name} 2>/dev/null) = 'masked'",
-        path => $::path
-      } ~> Anchor["systemd::unit_${name}::reloaded"] ->
-      exec { "Resetting failure state of systemd ${name}":
-        command => "systemctl reset-failed ${name}",
-        onlyif => "systemctl is-failed --quiet ${name}",
-        path => $::path
-      }
-    } elsif ($content != undef or ($mask != undef and ! $mask)) {
-      exec { "Unmasking systemd ${name}":
-        command => "systemctl unmask ${name}",
-        onlyif => "test $(systemctl is-enabled ${name} 2>/dev/null) = 'masked'",
-        path => $::path
-      }
-      if ($content != undef) {
-        Exec["Unmasking systemd ${name}"] ->
-        file { $_systemd_unit_file:
-          content => $content
-        } ~>
-        Exec["systemctl-daemon-reload for ${name}"] ~>
-        Anchor["systemd::unit_${name}::reloaded"]
-      } else {
-        Exec["Unmasking systemd ${name}"] ~>
-        Anchor["systemd::unit_${name}::reloaded"]
-      }
-    }
 
     if ($enable == undef) {
       if ($mask == undef) {
@@ -105,48 +58,109 @@ class epflsti_coreos::private::systemd {
       $_do_enable = $enable
     }
   
-    if ($_do_enable) {
-      Anchor["systemd::unit_${name}::reloaded"] ->
-      exec { "Enabling systemd ${name}":
-        command => "systemctl enable ${name}",
+    if ($::lifecycle_stage == "production") {
+  
+      anchor { "systemd::unit_${name}::reloaded": }
+  
+      exec { "systemctl-daemon-reload for ${name}":
+        command => 'systemctl daemon-reload || true',
         path => $::path,
-        unless => "systemctl is-enabled ${name} |grep -q -E 'enabled|static'"
+        refreshonly => true
       }
-    } elsif ($enable != undef and ! $enable) {
-      Anchor["systemd::unit_${name}::reloaded"] ->
-      exec { "Disabling systemd ${name}":
-        command => "systemctl disable ${name}",
-        path => $::path,
-        unless => "test $(/usr/bin/systemctl is-enabled ${name}) = 'disabled'"
+  
+      if ($ensure == "absent") {
+        file { $_systemd_unit_file:
+          ensure => "absent"
+        } ~>
+        Exec["systemctl-daemon-reload for ${name}"] ~>
+        Anchor["systemd::unit_${name}::reloaded"]
       }
-    }
-
-    if ($_kind == "service") {
-      if ($start == undef) {
-        Anchor["systemd::unit_${name}::reloaded"] ~>
-        exec { "Reloading systemd ${name}":
-          command => "systemctl reload-or-try-restart ${name}",
+      elsif ($mask != undef and $mask) {
+        exec { "Masking systemd ${name}":
+          command => "systemctl mask ${name}",
+          unless => "test $(systemctl is-enabled ${name} 2>/dev/null) = 'masked'",
+          path => $::path
+        } ~> Anchor["systemd::unit_${name}::reloaded"] ->
+        exec { "Resetting failure state of systemd ${name}":
+          command => "systemctl reset-failed ${name}",
+          onlyif => "systemctl is-failed --quiet ${name}",
           path => $::path
         }
-      } elsif ($start) {
-        Anchor["systemd::unit_${name}::reloaded"] ~>
-        exec { "Restarting systemd ${name}":
-          command => "systemctl reload-or-restart ${name}",
-          path => $::path,
-          refreshonly => true
-        } ->
-        exec { "Starting systemd ${name}":
-          command => "systemctl reload-or-restart ${name}",
-          path => $::path,
-          unless => "test $(systemctl is-active ${name}) = 'active'"
+      } elsif ($content != undef or ($mask != undef and ! $mask)) {
+        exec { "Unmasking systemd ${name}":
+          command => "systemctl unmask ${name}",
+          onlyif => "test $(systemctl is-enabled ${name} 2>/dev/null) = 'masked'",
+          path => $::path
         }
-      } else {
-        exec { "Stopping systemd ${name}":
-          command => "systemctl stop ${name}",
-          path => $::path,
-          unless => "test $(systemctl is-active ${name}) = 'inactive'"
+        if ($content != undef) {
+          Exec["Unmasking systemd ${name}"] ->
+          file { $_systemd_unit_file:
+            content => $content
+          } ~>
+          Exec["systemctl-daemon-reload for ${name}"] ~>
+          Anchor["systemd::unit_${name}::reloaded"]
+        } else {
+          Exec["Unmasking systemd ${name}"] ~>
+          Anchor["systemd::unit_${name}::reloaded"]
         }
       }
-    }  # if ($kind == "service")
-  }  # define unit
+  
+      if ($_do_enable) {
+        Anchor["systemd::unit_${name}::reloaded"] ->
+        exec { "Enabling systemd ${name}":
+          command => "systemctl enable ${name}",
+          path => $::path,
+          unless => "systemctl is-enabled ${name} |grep -q -E 'enabled|static'"
+        }
+      } elsif ($enable != undef and ! $enable) {
+        Anchor["systemd::unit_${name}::reloaded"] ->
+        exec { "Disabling systemd ${name}":
+          command => "systemctl disable ${name}",
+          path => $::path,
+          unless => "test $(/usr/bin/systemctl is-enabled ${name}) = 'disabled'"
+        }
+      }
+  
+      if ($_kind == "service") {
+        if ($start == undef) {
+          Anchor["systemd::unit_${name}::reloaded"] ~>
+          exec { "Reloading systemd ${name}":
+            command => "systemctl reload-or-try-restart ${name}",
+            path => $::path
+          }
+        } elsif ($start) {
+          Anchor["systemd::unit_${name}::reloaded"] ~>
+          exec { "Restarting systemd ${name}":
+            command => "systemctl reload-or-restart ${name}",
+            path => $::path,
+            refreshonly => true
+          } ->
+          exec { "Starting systemd ${name}":
+            command => "systemctl reload-or-restart ${name}",
+            path => $::path,
+            unless => "test $(systemctl is-active ${name}) = 'active'"
+          }
+        } else {
+          exec { "Stopping systemd ${name}":
+            command => "systemctl stop ${name}",
+            path => $::path,
+            unless => "test $(systemctl is-active ${name}) = 'inactive'"
+          }
+        }
+      }  # if ($kind == "service")
+    } else {  # $::lifecycle_stage != "production"
+    
+      file { $_systemd_unit_file:
+        content => $content
+      }
+      if ($_do_enable) {
+        File[$_systemd_unit_file] ~>
+        exec { "Enabling systemd ${name}":
+          command => "systemctl enable ${name}",
+          path => $::path,
+          unless => "systemctl is-enabled ${name} |grep -q -E 'enabled|static'"
+        }
+      }
+    }  # end if $::lifecycle_stage != "production"
+  }    # define unit
 }
