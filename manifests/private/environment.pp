@@ -13,6 +13,10 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
+# === Global Variables and Facts:
+#
+# See ../templates/environment.erb
+#
 # === Actions:
 #
 # * Create /etc/environment
