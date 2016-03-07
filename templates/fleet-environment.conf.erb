@@ -2,7 +2,7 @@
 [Service]
 Environment="FLEET_PUBLIC_IP=<%= @ipaddress %>"
 <%
-  metadata = { "region" => @etcd_region, "has_ups" => @has_ups }
+  metadata = { "region" => @etcd_region, "has_ups" => @has_ups, "memorysize_mb" => @memorysize_mb, "blockdevice_sda_size" => @blockdevice_sda_size }
   coreos_releases = @coreos_releases.map { |d| Integer(d.values[0]) }.sort
   for milestone in coreos_releases
     if Integer(@operatingsystemmajrelease) >= milestone
