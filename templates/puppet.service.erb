@@ -25,6 +25,7 @@ ExecStart=/usr/bin/docker run <% -%>
   -v /run:/run:ro <% -%>
   -v /usr/bin/systemctl:/usr/bin/systemctl:ro <% -%>
   -v /lib64:/lib64:ro <% -%>
+  -v /lib/modules:/lib/modules:ro <% -%>
   -v /usr/lib64/systemd:/usr/lib64/systemd <% -%>
   -v /usr/lib/systemd:/usr/lib/systemd <% -%>
   -v /sys/fs/cgroup:/sys/fs/cgroup:ro <% -%>
