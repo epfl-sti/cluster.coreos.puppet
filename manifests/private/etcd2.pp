@@ -9,12 +9,6 @@
 # configure a proxy (only knows where the members and masters are;
 # redirects most queries).
 #
-# === Global variables:
-#
-# [*etcd2_quorum_members*]
-#   A YAML-encoded dict associating etcd2 quorum member names with their
-#   peer-advertised URLs.
-#
 # === Actions:
 #
 # * Ensure that etcd2 is prepared as a quorum member or a
@@ -25,6 +19,10 @@
 # * Restart failing proxies (poor man's monitoring feature)
 #
 # === Parameters:
+#
+# [*etcd2_quorum_members*]
+#   A YAML-encoded dict associating etcd2 quorum member names with their
+#   peer-advertised URLs.
 #
 # [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
@@ -37,7 +35,8 @@
 # * https://github.com/coreos/etcd/blob/master/Documentation/admin_guide.md
 
 class epflsti_coreos::private::etcd2(
-  $rootpath = $epflsti_coreos::private::params::rootpath
+  $rootpath = $epflsti_coreos::private::params::rootpath,
+  $etcd2_quorum_members = $epflsti_coreos::private::params::etcd2_quorum_members
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
@@ -51,7 +50,7 @@ class epflsti_coreos::private::etcd2(
     start => true
   }
 
-  $members = parseyaml($::etcd2_quorum_members)
+  $members = parseyaml($etcd2_quorum_members)
   validate_hash($members)
 
   $is_proxy = empty(intersection([$::ipaddress], values($members)))
