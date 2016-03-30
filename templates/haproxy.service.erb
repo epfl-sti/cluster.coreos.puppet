@@ -1,0 +1,25 @@
+[Unit]
+Description=Serves all Consul servers to the open Web with NO ACCESS CONTROL WHATSOEVER
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=5s
+TimeoutStartSec=120
+TimeoutStopSec=25
+
+EnvironmentFile=/etc/environment
+
+# remove old container
+ExecStartPre=/bin/sh -c "docker ps -a | grep %p 1>/dev/null && docker rm %p || true"
+
+# Start the container
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --name=%p  \
+    --net=host  \
+    -e HAPROXY_DOMAIN=<%= @public_web_domain %> \
+    ciscocloud/haproxy-consul
+
+ExecStop=/usr/bin/docker stop %p
