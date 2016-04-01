@@ -38,7 +38,7 @@ class epflsti_coreos::private::params {
 
   $has_ups = member(parseyaml($::ups_hosts), $::hostname)
 
-  $docker_registry_address = "docker-registry.${::domain}:5000"
+  $docker_registry_address = "registry.service.consul:5000"
   $docker_puppet_image_name = "cluster.coreos.puppet"
 
   $etcd2_quorum_members = $::quorum_members
