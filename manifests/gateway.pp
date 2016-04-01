@@ -109,7 +109,13 @@ class epflsti_coreos::gateway(
   private::systemd::unit { "${::cluster_owner}.haproxy.service":
     # Uses $::public_web_domain
     content => template('epflsti_coreos/haproxy.service.erb'),
-    start => ($::lifecycle_stage == "production")
+    start => ($::lifecycle_stage == "production"),
+    enable => $is_active
+  }
+  private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
+    content => template('epflsti_coreos/squid-in-a-can.service.erb'),
+    start => ($::lifecycle_stage == "production"),
+    enable => $is_active
   }
 
   if ($is_active) {
@@ -122,7 +128,12 @@ class epflsti_coreos::gateway(
       path => $path,
       command => "/sbin/iptables -t nat -A POSTROUTING -o ${external_interface} -j MASQUERADE",
       unless => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
-    } 
+    }
+    exec { "Enable transparent forwarding":
+      path => $path,
+      command => "/sbin/iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w",
+      unless => "/sbin/iptables -t nat -L -v |grep 3129",
+    }
   } else {
     exec { "Disable gateway VIP":
       path => $path,
@@ -134,5 +145,10 @@ class epflsti_coreos::gateway(
       command => "/sbin/iptables -t nat -D POSTROUTING -o ${external_interface} -j MASQUERADE",
       onlyif => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
     } 
+    exec { "Disable transparent forwarding":
+      path => $path,
+      command => "/sbin/iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w",
+      onlyif => "/sbin/iptables -t nat -L -v |grep 3129",
+    }
   }
 }

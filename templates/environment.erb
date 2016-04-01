@@ -1,3 +1,5 @@
 COREOS_PRIVATE_IPV4=<%= @ipaddress %>
 HOST_IP=<%= @ipaddress %>
+<%if @ipv4_network %>COREOS_PRIVATE_NETWORK=<%= @ipv4_network %>
+<% end -%>
 <%if @has_ups %>HAS_UPS=1<% end %>

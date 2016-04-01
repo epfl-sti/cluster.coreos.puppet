@@ -19,6 +19,10 @@
 #
 # [*docker_puppet_image_name*]
 #   The (unqualified) image name for Puppet-agent-in-Docker
+#
+# [*etcd2_quorum_members*]
+#   A YAML-encoded dict associating etcd2 quorum member names with their
+#   peer-advertised URLs.
 
 class epflsti_coreos::private::params {
   $rootpath = "/opt/root"
@@ -36,4 +40,6 @@ class epflsti_coreos::private::params {
 
   $docker_registry_address = "docker-registry.${::domain}:5000"
   $docker_puppet_image_name = "cluster.coreos.puppet"
+
+  $etcd2_quorum_members = $::quorum_members
 }

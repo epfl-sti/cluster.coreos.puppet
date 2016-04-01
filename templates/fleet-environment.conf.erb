@@ -2,7 +2,28 @@
 [Service]
 Environment="FLEET_PUBLIC_IP=<%= @ipaddress %>"
 <%
-  metadata = { "region" => @etcd_region, "has_ups" => @has_ups }
+  # Calculate the total size of the disc even for dual drive machines
+  _totalSize = 0
+  unless (defined?(@blockdevice_sda_size)).nil?
+    _totalSize += @blockdevice_sda_size.to_i
+  end
+
+  unless (defined?(@blockdevice_sdb_size)).nil?
+    _totalSize += @blockdevice_sdb_size.to_i
+  end
+
+  # Defining 3 disc sizes in text
+  _textDiscSize = "unkown"
+  if _totalSize <= 200000000000
+    _textDiscSize = "small"
+  elsif (_totalSize > 200000000000) && (_totalSize <= 550000000000)
+    _textDiscSize = "medium"
+  else
+    _textDiscSize = "large"
+  end
+
+  # Set metadata for fleet
+  metadata = { "region" => @etcd_region, "has_ups" => @has_ups, "memorysize_mb" => @memorysize_mb, "blockdevice_size" => _totalSize, "text-disc_size" => _textDiscSize }
   coreos_releases = @coreos_releases.map { |d| Integer(d.values[0]) }.sort
   for milestone in coreos_releases
     if Integer(@operatingsystemmajrelease) >= milestone

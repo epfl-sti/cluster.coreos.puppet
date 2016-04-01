@@ -102,5 +102,15 @@ class epflsti_coreos::private::puppet(
       "production" => true,
       default => undef
     }
+  } -> anchor { "puppet.service configured": }
+
+  # For some reason that isn't entirely clear, $::lifecycle_stage appears
+  # to be undef on a third of the cluster today (2016-01-22)...
+  if (! $::lifecycle_stage) {
+    exec { "Restarting Puppet":
+      command => "systemctl restart puppet.service",
+      path => $::path,
+      require => Anchor["puppet.service configured"]
+    }
   }
 }

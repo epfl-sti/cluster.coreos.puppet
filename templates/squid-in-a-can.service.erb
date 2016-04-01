@@ -1,0 +1,24 @@
+[Unit]
+Description=Squid-in-a-can (https://github.com/jpetazzo/squid-in-a-can)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=5s
+TimeoutStartSec=120
+TimeoutStopSec=25
+
+EnvironmentFile=/etc/environment
+
+# remove old container
+ExecStartPre=/bin/sh -c "docker ps -a | grep %p 1>/dev/null && docker rm %p || true"
+
+# Start the container
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --name=%p  \
+    --net=host  \
+    jpetazzo/squid-in-a-can
+
+ExecStop=/usr/bin/docker stop %p
