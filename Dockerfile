@@ -5,7 +5,7 @@ RUN echo http://dl-4.alpinelinux.org/alpine/edge/testing/ >> /etc/apk/repositori
 RUN apk upgrade --update --available && \
     apk add \
       ca-certificates \
-      openssl=1.0.1q-r0 \
+      openssl \
       curl \
       ruby \
       util-linux \
@@ -17,7 +17,7 @@ RUN apk upgrade --update --available && \
     && rm -f /var/cache/apk/* && \
     gem install -N \
       facter:'>= 2.4.3' \
-      puppet:'>= 3.8.1' \
+      puppet:'= 3.8.1' \
     && rm -fr /root/.gem
 
 ENV container docker
