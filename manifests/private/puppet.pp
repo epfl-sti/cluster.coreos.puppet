@@ -77,7 +77,7 @@ class epflsti_coreos::private::puppet(
   }
 
   if ($_puppet_docker_version) {
-    $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:${$_puppet_docker_version}"
+    $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:latest"
     $extra_facts = {
       cluster_coreos_puppet_current => $_puppet_docker_version
     }
@@ -104,9 +104,11 @@ class epflsti_coreos::private::puppet(
     }
   } -> anchor { "puppet.service configured": }
 
-  # For some reason that isn't entirely clear, $::lifecycle_stage appears
-  # to be undef on a third of the cluster today (2016-01-22)...
-  if (! $::lifecycle_stage) {
+  $should_restart_puppet = (
+    ($::cluster_coreos_puppet_latest and ($::cluster_coreos_puppet_latest !=
+                                          $::cluster_coreos_puppet_current))
+    or (! $::lifecycle_stage)) # Happened on a third of the cluster on 2016-01-22 for some reason
+  if ($should_restart_puppet) {
     exec { "Restarting Puppet":
       command => "systemctl restart puppet.service",
       path => $::path,
