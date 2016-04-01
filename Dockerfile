@@ -13,10 +13,11 @@ RUN apk upgrade --update --available && \
       ipmitool \
       dmidecode \
       iptables \
+      net-snmp-tools \
     && rm -f /var/cache/apk/* && \
     gem install -N \
       facter:'>= 2.4.3' \
-      puppet:'= 3.8.1' \
+      puppet:'>= 3.8.1' \
     && rm -fr /root/.gem
 
 ENV container docker
