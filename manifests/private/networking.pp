@@ -95,4 +95,13 @@ DHCP=no
 "
 
   }
+
+  file { "${rootpath}/etc/resolv.conf":
+    ensure => "file",
+    content => inline_template('# Managed by Puppet, DO NOT EDIT
+
+nameserver <%= @dns_vip %>
+search <%= @domain %> <%= @domain.split(".").slice(-2, +100).join(".") %>
+')
+  }
 }
