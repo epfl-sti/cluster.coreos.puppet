@@ -52,6 +52,7 @@ $switch_ips = ["192.168.11.124", "192.168.11.125", "192.168.11.126", "192.168.11
 
 Facter.add('switch_address') do
     macaddress = Facter.value(:macaddress_ethbr4)
+    next if (! macaddress)
     value = nil
     for switch_ip in $switch_ips do
       port_nr = snmpwalk(macaddress, switch_ip)
