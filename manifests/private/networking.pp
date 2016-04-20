@@ -138,7 +138,6 @@ Kind=bond
 
 [Bond]
 Mode=active-backup
-MIIMonitorSec=500
 ")
 
     }
