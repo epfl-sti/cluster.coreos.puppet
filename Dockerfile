@@ -12,6 +12,7 @@ RUN apk upgrade --update --available && \
       shadow \
       ipmitool \
       dmidecode \
+      ethtool \
       iptables \
       net-snmp-tools \
     && rm -f /var/cache/apk/* && \
