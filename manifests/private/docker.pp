@@ -60,4 +60,10 @@ WantedBy=sockets.target
     command => "ls -l ${rootpath}/opt/bin/pipework; set -e -x; exec > ${rootpath}/tmp/log 2>&1; curl -o ${rootpath}/opt/bin/pipework https://raw.githubusercontent.com/jpetazzo/pipework/master/pipework && chmod a+x ${rootpath}/opt/bin/pipework",
     creates => "${rootpath}/opt/bin/pipework"
   }
+
+  exec { "Poor man's docker sync":
+    path => $::path,
+    command => "/bin/true",
+    onlyif => "${rootpath}/usr/bin/docker images|grep ${::docker_registry} |cut -f1 -d\  | xargs -n 1 ${rootpath}/usr/bin/docker push && /bin/false"
+  }
 }

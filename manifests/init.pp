@@ -43,11 +43,17 @@ class epflsti_coreos() {
     # Note: the Puppet update dance may yet restart Puppet (but not Docker,
     # since exec { "restart docker in host": } in docker.pp is guaranteed
     # never to complete if invoked)
-    stage { "production-ready":
-      require => Stage["main"]
-    }
-    class { "epflsti_coreos::private::fleet":
-      stage => "production-ready"
+
+    # Also skip joining if on a discovery host name
+    $is_provisioned = $::hostname !~ /^mac[0-9a-f]{6}$/
+
+    if ($is_provisioned) {
+      stage { "production-ready":
+        require => Stage["main"]
+      }
+      class { "epflsti_coreos::private::fleet":
+        stage => "production-ready"
+      }
     }
   }
 }

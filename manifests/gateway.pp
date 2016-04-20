@@ -20,7 +20,7 @@
 #   IPv4 address on the external network
 #
 # [*external_interface*]
-#   The name of the network interface connected to the Internet#
+#   The name of the network interface connected to the Internet
 #
 # [*external_netmask*]
 #   IPv4 netmask on the external network
@@ -63,12 +63,14 @@
 # $external_interface.
 class epflsti_coreos::gateway(
   $external_address = undef,
-  $external_interface = $::epflsti_coreos::private::params::external_interface,
+  $external_interface = undef,
   $external_gateway = undef,
   $external_netmask = undef,
   $is_active = undef
-) inherits epflsti_coreos::private::params {
+) {
   include ::epflsti_coreos::private::systemd
+  validate_string($external_address, $external_interface,
+                  $external_netmask, $external_gateway)
 
   exec { "restart networkd in host":
     command => "/usr/bin/systemctl restart systemd-networkd.service",
