@@ -22,21 +22,22 @@
 #
 # * Set the FQDN in /etc/hostname, as is the CoreOS way
 #
-# * [TODO] Set up the bond0 interface and ethbr4 bridge as explained
-#   above, using the Foreman-specified primary interface and IPv4
-#   address, and the MAC address of the first (internal) physical
-#   interface
+# * If there is more than one physical internal interface, set up the
+#   bond0 interface for active-passive layer 2 failover with MII
+#   monitoring. A node thus appears to always keep the same MAC
+#   address (the one of its first internal interface), regardless of
+#   failover state. (Actual load balancing with 802.3ad LACP would
+#   require "intelligent" (expensive) switches.)
+#
+# * Set up the ethbr4 bridge as explained above, using the
+#   Foreman-specified primary interface and IPv4 address, and the MAC
+#   address of the first (internal) physical interface. Enlist
+#   either bond0 or the sole internal interface into it.
 #
 # * Set up the default route and DNS server, in a way that lets
 #   gateway.pp override the former seamlessly
 #
 # * Disable DHCPv4 on all interfaces
-#
-# === Parameters:
-#
-# [*rootpath*]
-#    Where in the Puppet-agent Docker container, the host root is
-#    mounted
 #
 # === Bootstrapping:
 #
@@ -55,10 +56,20 @@ class epflsti_coreos::private::networking(
     content => "${::fqdn}\n"
   }
 
+  file { "${rootpath}/etc/resolv.conf":
+    ensure => "file",
+    content => inline_template('# Managed by Puppet, DO NOT EDIT
+
+nameserver <%= @dns_vip %>
+search <%= @domain %> <%= @domain.split(".").slice(-2, +100).join(".") %>
+')
+  }
+
   $internal_interfaces = delete(grep(split($::interfaces, ','), '^(en|eth)'), ["ethbr4", $::epflsti_coreos::gateway::external_interface])
   validate_bool(size($internal_interfaces) > 0)
+  $has_bond = size($internal_interfaces) > 1
   $first_internal_interface = $internal_interfaces[0]
-  $first_mac_address = inline_template("<%= scope.lookupvar('macaddress_' + @first_internal_interface) %>")
+  $first_mac_address = inline_template("<%= scope.lookupvar('permanent_macaddress_' + @first_internal_interface) %>")
 
   systemd::unit { "ethbr4.netdev":
     content => inline_template("#
@@ -75,26 +86,81 @@ MACAddress=<%= @first_mac_address %>
     content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
   }
 
-  $::foreman_interfaces.each |$interface_obj| {
-    $interface_name = $interface_obj["identifier"]
-    if ($interface_name == $primary_interface) {
-      systemd::unit { "00-${primary_interface}.network":
-        content => "# Network configuration of ${primary_interface}
+  # https://github.com/coreos/bugs/issues/298#issuecomment-143335399
+  ensure_resource("file", "${rootpath}/etc/modprobe.d",
+                  {ensure => "directory" })
+  file { "${rootpath}/etc/modprobe.d/bonding.conf":
+    ensure => "file",
+    content => "#
+# Managed by Puppet, DO NOT EDIT
+#
+options bonding max_bonds=0
+"
+  }
+
+
+  split($::interfaces, ',').each |$interface_name| {
+    if (empty(intersection([$interface_name], $internal_interfaces))) {
+      systemd::unit { "00-${interface_name}.network":
+        ensure => "absent"  # Leave it for ../gateway.pp to manage (under a
+                            # different file name)
+      }
+    } else {
+      systemd::unit { "00-${interface_name}.network":
+        content => inline_template("# Network configuration of <%= @interface_name %>
 #
 # Managed by Puppet, DO NOT EDIT
 #
 [Match]
-Name=${primary_interface}
+Name=<%= @interface_name %>
+
+[Network]
+DHCP=no
+<%if @has_bond %>
+Bond=bond0
+<% else %>
+Bridge=ethbr4
+<% end %>
+")
+      }
+    }  # if this is an internal interface
+  }  # loop over each interface
+
+  if ($has_bond) {
+    systemd::unit { "bond0.netdev":
+      content => inline_template("# Definition of device bond0
+#
+# Managed by Puppet, DO NOT EDIT
+#
+[NetDev]
+Name=bond0
+Kind=bond
+
+[Bond]
+Mode=active-backup
+MIIMonitorSec=500
+")
+
+    }
+    systemd::unit { "bond0.network":
+      content => inline_template("# Network configuration of device bond0
+#
+# Managed by Puppet, DO NOT EDIT
+#
+[Match]
+Name=bond0
+
+[Link]
+MACAddress=<%= @first_mac_address %>
 
 [Network]
 DHCP=no
 Bridge=ethbr4
-"
-      }
-    } else {  # $interface_name != $primary_interface
-      systemd::unit { "00-${interface_name}.network":
-        ensure => "absent"
-      }
+")
+    }
+  } else {  # No bonding device
+    systemd::unit { ["bond0.netdev", "bond0.network"]:
+      ensure => "absent"
     }
   }
 
@@ -113,14 +179,5 @@ Name=enp*
 DHCP=no
 "
 
-  }
-
-  file { "${rootpath}/etc/resolv.conf":
-    ensure => "file",
-    content => inline_template('# Managed by Puppet, DO NOT EDIT
-
-nameserver <%= @dns_vip %>
-search <%= @domain %> <%= @domain.split(".").slice(-2, +100).join(".") %>
-')
   }
 }
