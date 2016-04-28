@@ -6,32 +6,34 @@
 # secondary network interface physically attached to the public
 # Internet (the primary interface being reserved for the internal
 # network, so that even gateways may be controlled with IPMI). There
-# is no point in attaching this class to internal nodes, although it
-# doesn't hurt (or in fact, do anything) if $external_address and
-# $is_gateway are both left undefined (their default value).
+# is no point in attaching this class to an internal node, except for
+# one round of Puppet to clean up a node that served as gateway
+# previously.
 #
-# Each gateway host gets a dedicated public IP address. In addition,
-# one of the gateways is the *active gateway* and is set up for
-# outgoing traffic and NAT (see Actions: below).
+# Each gateway host gets a set of public IP addresses (IPv4 and IPv6)
+# and may advertise an internal IPv6 address range. In addition, one
+# of the gateways is the *active gateway* and is set up for outgoing
+# IPv4 traffic and NAT (see Actions: below).
 # 
-# === Parameters:
+# Routing IPv6 (both natively and for VPN-as-a-service) is currently
+# not supported.
 #
-# [*external_address*]
-#   IPv4 address on the external network
+# === Parameters:
 #
 # [*external_interface*]
 #   The name of the network interface connected to the Internet
 #
-# [*external_netmask*]
-#   IPv4 netmask on the external network
+# [*external_addresses*]
+#   Addresses on the external network, as a list of strings in CIDR
+#   "IPv4/netmask" format (IPv6 not supported yet)
 #
 # [*external_gateway*]
 #   IPv4 default route on the external network
 #
 # [*is_active*]
-#   True on the active *outgoing* gateway (the one that holds the
-#   $::gateway_vip); false on the hot standby(s). Note that this
-#   is for egress traffic only; with care, ingress traffic can be
+#   True on the active *outgoing* IPv4 gateway (the one that holds the
+#   $::gateway_vip); false on the hot standby(s). Note that this is
+#   for egress traffic only; with care, ingress traffic can be
 #   configured with an active-active setup (although this is not
 #   implemented yet)
 #
@@ -62,15 +64,14 @@
 # interface to $::gateway_vip and activates IPv4 masquerading through
 # $external_interface.
 class epflsti_coreos::gateway(
-  $external_address = undef,
   $external_interface = undef,
+  $external_adresses = [],
   $external_gateway = undef,
   $external_netmask = undef,
   $is_active = undef
 ) {
   include ::epflsti_coreos::private::systemd
-  validate_string($external_address, $external_interface,
-                  $external_netmask, $external_gateway)
+  fail("OUCH")
 
   exec { "restart networkd in host":
     command => "/usr/bin/systemctl restart systemd-networkd.service",
