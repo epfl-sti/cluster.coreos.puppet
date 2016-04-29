@@ -83,7 +83,7 @@ MACAddress=<%= @first_mac_address %>
   }
 
   systemd::unit { "50-ethbr4-internal.network":
-    content => template("epflsti_coreos/networking/50-ethbr4-internal.network.erb")
+    content => template("epflsti_coreos/networkd/50-ethbr4-internal.network.erb")
   }
 
   # https://github.com/coreos/bugs/issues/298#issuecomment-143335399
