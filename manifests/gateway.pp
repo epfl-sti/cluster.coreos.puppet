@@ -72,6 +72,8 @@
 # Also, iff $ipv4_outgoing_active is not undef:
 #
 # * Alias the ethbr4 interface to $::gateway_vip
+# * Set up IPv4 masquerading
+# * Set up transparent proxying on port 80
 #
 class epflsti_coreos::gateway(
   $external_interface = undef,
