@@ -82,6 +82,7 @@ MACAddress=<%= @first_mac_address %>
 ")
   }
 
+  $uses_internal_gateway = ! $::epflsti_coreos::gateway::external_interface
   systemd::unit { "50-ethbr4-internal.network":
     content => template("epflsti_coreos/networkd/50-ethbr4-internal.network.erb")
   }

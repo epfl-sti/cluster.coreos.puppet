@@ -22,26 +22,33 @@
 #
 # [*external_interface*]
 #   The name of the network interface connected to the Internet
+#   (required)  
 #
 # [*external_addresses*]
 #   Addresses on the external network, as a list of strings in CIDR
-#   "IPv4/netmask" format (IPv6 not supported yet)
+#   "IPv4/netmask" format (IPv6 not supported yet). If empty, do not
+#   configure a gateway at all (keep the bonded pair set up by
+#   epflsti_coreos::private::network); this is useful to "clean up"
+#   a former gateway that has been physically plugged back the
+#   "normal" way
 #
 # [*external_gateway*]
-#   IPv4 default route on the external network
-#
-# [*is_active*]
-#   True on the active *outgoing* IPv4 gateway (the one that holds the
-#   $::gateway_vip); false on the hot standby(s). Note that this is
+#   IPv4 default route on the external network on the active
+#   *outgoing* IPv4 gateway (the one that holds the
+#   $::gateway_vip); undef on the hot standby(s). Note that this is
 #   for egress traffic only; with care, ingress traffic can be
 #   configured with an active-active setup (although this is not
 #   implemented yet)
+#
+# [*ipv4_outgoing_active*]
+#   True iff this is the *active* IPv4 gateway; that is, it has the
+#   IPv4 VIP aliased on ethbr4.
 #
 # === Global Variables:
 #
 # [*$::gateway_vip*]
 #   The IP address that all internal nodes have set up as their default route
-#   at provisioning time. The gateway that ${is_active} sets up this IP
+#   at provisioning time. The gateway that ${ipv4_outgoing_active} sets up this IP
 #   as an alias for itself, and enables routing and masquerading.
 #
 # [*$::cluster_owner*]
@@ -54,58 +61,43 @@
 #
 # === Actions:
 #
-# If $external_address is set, this class overrides the network
-# configuration set up by cloud-config.yml at provisioning time thusly:
+# If $external_addresses is set and not empty, this class overrides
+# the network configuration set up by cloud-config.yml at provisioning
+# time thusly:
 #
-# * Configure $external_interface with $external_address/$external_netmask
-# * Change default route to point to $external_gateway
-
-# In addition, if $is_active is set, this class aliases the ethbr4
-# interface to $::gateway_vip and activates IPv4 masquerading through
-# $external_interface.
+# * Configure $external_interface with the $external_addresses
+# * Activate IPv4 masquerading through $external_interface
+# * Change the default route to point to $external_gateway
+#
+# Also, iff $ipv4_outgoing_active is not undef:
+#
+# * Alias the ethbr4 interface to $::gateway_vip
+#
 class epflsti_coreos::gateway(
   $external_interface = undef,
-  $external_adresses = [],
+  $external_addresses = [],
   $external_gateway = undef,
-  $external_netmask = undef,
-  $is_active = undef
+  $ipv4_outgoing_active = undef
 ) {
+  validate_string($external_interface)
+
   include ::epflsti_coreos::private::systemd
-  fail("OUCH")
 
   exec { "restart networkd in host":
     command => "/usr/bin/systemctl restart systemd-networkd.service",
     refreshonly => true
   }
 
-  if ($external_address and $external_interface and $external_netmask and
-      $external_gateway) {
-        validate_string($external_address, $external_interface,
-                        $external_netmask, $external_gateway)
+  validate_array($external_addresses)
+  if (size($external_addresses) > 0) {
     file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
       ensure => "present",
-      content => template("epflsti_coreos/networking/50-epflnet.network.erb")
+      content => template("epflsti_coreos/networkd/50-epflnet.network.erb")
     } ~> Exec["restart networkd in host"]
-    file { "/etc/systemd/network/40-ethbr4-nogateway.network":
-      ensure => "link",
-      target => "40-ethbr4-nogateway.opt-network"
-    } ~> Exec["restart networkd in host"]
-    exec { "Disable default route through ethbr4":
-      command => "/sbin/ip route del default dev ethbr4",
-      onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
-    }
   } else {
-    file { ["/etc/systemd/network/40-ethbr4-nogateway.network",
-            "/etc/systemd/network/50-${external_interface}-epflnet.network"]:
-      ensure => "absent"
-    } ~> Exec["restart networkd in host"]
     exec { "Flush addresses on ${external_interface}":
       command => "/sbin/ip addr flush dev ${external_interface}",
       onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q inet"
-    }
-    exec { "Disable default route through ${external_interface}":
-      command => "/sbin/ip route del default dev ${external_interface}",
-      onlyif => "/sbin/ip route show dev ${external_interface} | grep -q ^default"
     }
   }
 
@@ -113,15 +105,15 @@ class epflsti_coreos::gateway(
     # Uses $::public_web_domain
     content => template('epflsti_coreos/haproxy.service.erb'),
     start => ($::lifecycle_stage == "production"),
-    enable => $is_active
+    enable => size($external_addresses) > 0
   }
   private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
     content => template('epflsti_coreos/squid-in-a-can.service.erb'),
     start => ($::lifecycle_stage == "production"),
-    enable => $is_active
+    enable => size($external_addresses) > 0
   }
 
-  if ($is_active) {
+  if ($external_gateway and $ipv4_outgoing_active) {
     exec { "Enable gateway VIP":
       path => $path,
       command => "/sbin/ip addr add ${::gateway_vip}/24 dev ethbr4",
@@ -136,6 +128,10 @@ class epflsti_coreos::gateway(
       path => $path,
       command => "/sbin/iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w",
       unless => "/sbin/iptables -t nat -L -v |grep 3129",
+    }
+    exec { "Disable default route through ethbr4":
+      command => "/sbin/ip route del default dev ethbr4",
+      onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
     }
   } else {
     exec { "Disable gateway VIP":
@@ -152,6 +148,10 @@ class epflsti_coreos::gateway(
       path => $path,
       command => "/sbin/iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w",
       onlyif => "/sbin/iptables -t nat -L -v |grep 3129",
+    }
+    exec { "Disable default route through ${external_interface}":
+      command => "/sbin/ip route del default dev ${external_interface}",
+      onlyif => "/sbin/ip route show dev ${external_interface} | grep -q ^default"
     }
   }
 }

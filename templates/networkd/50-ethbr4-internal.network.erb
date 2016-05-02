@@ -9,5 +9,7 @@ Name=ethbr4
 
 [Network]
 Address=<%= @ipaddress %>/24
+<% if @uses_internal_gateway -%>
 Gateway=<%= @gateway_vip %>
+<% end -%>
 DNS=<%= @dns_vip %>

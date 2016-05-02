@@ -5,6 +5,10 @@
 [Match]
 Name=<%= @external_interface %>
 
-[Network]   
-Address=<%= @external_address %>/<%= @external_netmask %>
+[Network]
+<% @external_addresses.each do |external_address| -%>
+Address=<%= external_address %>
+<% end -%>
+<% if @external_gateway -%>
 Gateway=<%= @external_gateway %>
+<% end -%>
