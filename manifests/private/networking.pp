@@ -116,11 +116,11 @@ Name=<%= @interface_name %>
 
 [Network]
 DHCP=no
-<%if @has_bond %>
+<%if @has_bond -%>
 Bond=bond0
-<% else %>
+<% else -%>
 Bridge=ethbr4
-<% end %>
+<% end -%>
 ")
       }
     }  # if this is an internal interface
