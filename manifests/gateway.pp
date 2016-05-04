@@ -32,17 +32,15 @@
 #   a former gateway that has been physically plugged back the
 #   "normal" way
 #
-# [*external_gateway*]
-#   IPv4 default route on the external network on the active
-#   *outgoing* IPv4 gateway (the one that holds the
-#   $::gateway_vip); undef on the hot standby(s). Note that this is
-#   for egress traffic only; with care, ingress traffic can be
-#   configured with an active-active setup (although this is not
-#   implemented yet)
+# [*external_ipv4_gateway*]
+#   IPv4 default route on the external network for the gateway nodes.
 #
 # [*ipv4_outgoing_active*]
 #   True iff this is the *active* IPv4 gateway; that is, it has the
-#   IPv4 VIP aliased on ethbr4.
+#   IPv4 VIP aliased on ethbr4. Note that this is for egress
+#   (NATed) traffic only; with care, ingress traffic can be
+#   configured with an active-active setup (although this is not
+#   implemented yet)
 #
 # === Global Variables:
 #
@@ -67,7 +65,7 @@
 #
 # * Configure $external_interface with the $external_addresses
 # * Activate IPv4 masquerading through $external_interface
-# * Change the default route to point to $external_gateway
+# * Change the default route to point to $external_ipv4_gateway
 #
 # Also, iff $ipv4_outgoing_active is not undef:
 #
@@ -78,7 +76,7 @@
 class epflsti_coreos::gateway(
   $external_interface = undef,
   $external_addresses = [],
-  $external_gateway = undef,
+  $external_ipv4_gateway = undef,
   $ipv4_outgoing_active = undef
 ) {
   validate_string($external_interface)
@@ -115,7 +113,7 @@ class epflsti_coreos::gateway(
     enable => size($external_addresses) > 0
   }
 
-  if ($external_gateway and $ipv4_outgoing_active) {
+  if ($external_ipv4_gateway and $ipv4_outgoing_active) {
     exec { "Enable gateway VIP":
       path => $path,
       command => "/sbin/ip addr add ${::gateway_vip}/24 dev ethbr4",

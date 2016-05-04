@@ -9,6 +9,6 @@ Name=<%= @external_interface %>
 <% @external_addresses.each do |external_address| -%>
 Address=<%= external_address %>
 <% end -%>
-<% if @external_gateway -%>
-Gateway=<%= @external_gateway %>
+<% if @external_ipv4_gateway -%>
+Gateway=<%= @external_ipv4_gateway %>
 <% end -%>
