@@ -1,0 +1,23 @@
+[Unit]
+Description=IPv6 Router Advertisement Daemon (radvd)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=60s
+TimeoutStartSec=120
+TimeoutStopSec=25
+
+EnvironmentFile=/etc/environment
+
+# Start the container
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --name=%p  \
+    --privileged \
+    --net=host  \
+    -e ADVERTISE_PREFIX=<%= @ipv6_advertise_prefix %> \
+    registry.service.consul:5000/cluster.ipv6.radvd
+
+ExecStop=/usr/bin/docker rm -f %p

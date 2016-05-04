@@ -42,6 +42,9 @@
 #   configured with an active-active setup (although this is not
 #   implemented yet)
 #
+# [*ipv6_advertise_prefix*]
+#   The /64 IPv6 prefix to use for SLAAC of the physical nodes.
+#
 # === Global Variables:
 #
 # [*$::gateway_vip*]
@@ -67,7 +70,8 @@
 # * Activate IPv4 masquerading through $external_interface
 # * Change the default route to point to $external_ipv4_gateway
 #
-# Also, iff $ipv4_outgoing_active is not undef:
+# Additionnally, iff $ipv6_advertise_prefix is set:
+# And finally, iff $ipv4_outgoing_active is not undef:
 #
 # * Alias the ethbr4 interface to $::gateway_vip
 # * Set up IPv4 masquerading
@@ -77,7 +81,8 @@ class epflsti_coreos::gateway(
   $external_interface = undef,
   $external_addresses = [],
   $external_ipv4_gateway = undef,
-  $ipv4_outgoing_active = undef
+  $ipv4_outgoing_active = undef,
+  $ipv6_advertise_prefix = undef
 ) {
   validate_string($external_interface)
 
@@ -89,7 +94,8 @@ class epflsti_coreos::gateway(
   }
 
   validate_array($external_addresses)
-  if (size($external_addresses) > 0) {
+  $gateway_services_enabled = size($external_addresses) > 0
+  if ($gateway_services_enabled) {
     file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
       ensure => "present",
       content => template("epflsti_coreos/networkd/50-epflnet.network.erb")
@@ -105,14 +111,20 @@ class epflsti_coreos::gateway(
     # Uses $::public_web_domain
     content => template('epflsti_coreos/haproxy.service.erb'),
     start => ($::lifecycle_stage == "production"),
-    enable => size($external_addresses) > 0
+    enable => $gateway_services_enabled
   }
   private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
     content => template('epflsti_coreos/squid-in-a-can.service.erb'),
     start => ($::lifecycle_stage == "production"),
-    enable => size($external_addresses) > 0
+    enable => $gateway_services_enabled
   }
-
+  $gateway_v6_services_enabled = $gateway_services_enabled and ($ipv6_advertise_prefix != undef)
+  private::systemd::unit { "${::cluster_owner}.ipv6.radvd.service":
+    content => template('epflsti_coreos/radvd.service.erb'),
+    start => ($::lifecycle_stage == "production"),
+    enable => $gateway_v6_services_enabled
+  }
+  
   if ($external_ipv4_gateway and $ipv4_outgoing_active) {
     exec { "Enable gateway VIP":
       path => $path,
