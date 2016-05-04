@@ -6,10 +6,11 @@
 # .bash_history with commands useful for the bootstrap; likewise in
 # production.
 class epflsti_coreos::private::comfort() {
+
   file { "/home/core/.toolboxrc":
     owner => 500,
     group => 500,
-    content => "TOOLBOX_DOCKER_IMAGE=epflsti/cluster.coreos.toolbox
+    content => "TOOLBOX_DOCKER_IMAGE=registry.service.consul:5000/cluster.coreos.toolbox
 TOOLBOX_DOCKER_TAG=latest
 "
   }
