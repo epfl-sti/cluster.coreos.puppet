@@ -37,6 +37,7 @@ class epflsti_coreos() {
     class { "epflsti_coreos::private::environment": }
     class { "epflsti_coreos::private::docker": }
     class { "epflsti_coreos::private::etcd2":  }
+    class { "epflsti_coreos::private::calico":  }
 
     ######################## THE FINISHING TOUCH #########################
     # Don't join the Fleet cluster until everything else is set up.
