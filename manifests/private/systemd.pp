@@ -128,7 +128,8 @@ class epflsti_coreos::private::systemd {
           Anchor["systemd::unit_${name}::reloaded"] ~>
           exec { "Reloading systemd ${name}":
             command => "systemctl reload-or-try-restart ${name}",
-            path => $::path
+            path => $::path,
+            refreshonly => true
           }
         } elsif ($start) {
           Anchor["systemd::unit_${name}::reloaded"] ~>
