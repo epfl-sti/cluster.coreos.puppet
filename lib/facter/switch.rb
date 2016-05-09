@@ -18,7 +18,9 @@ def snmpwalk(macaddr, switch_ip)
   ethernet_port_mib_base = "mib-2.17.7.1.2.2.1.2.1"
   ethernet_port_mib = ethernet_port_mib_base + "." + macaddr.split(":").map{|n| n.to_i(16).to_s(10)}.join(".")
   command = "snmpwalk -Os -c public -v 1 "+ switch_ip+" "+ethernet_port_mib
-  output_lines = IO.popen(command).readlines
+  snmpwalk_process = IO.popen(command)
+  output_lines = snmpwalk_process.readlines
+  Process.wait(snmpwalk_process.pid)
   if output_lines.empty? then
     $logger.error("Oops, no output lines")
     return
