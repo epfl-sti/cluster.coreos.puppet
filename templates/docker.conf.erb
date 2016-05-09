@@ -1,2 +1,6 @@
+[Unit]
+Requires=etcd2.service
+After=etcd2.service
+
 [Service]
-Environment="DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --ipv6"
+Environment="DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --ipv6 --cluster-store=etcd://127.0.0.1:2379"
