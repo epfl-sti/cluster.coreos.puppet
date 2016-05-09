@@ -13,11 +13,23 @@ class epflsti_coreos::private::calico (
   $calicoctl_url = "http://www.projectcalico.org/builds/calicoctl",
   $rootpath = $epflsti_coreos::private::params::rootpath,
 ) inherits epflsti_coreos::private::params {
+  include ::epflsti_coreos::private::systemd
 
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
   exec { "curl calicoctl":
     command => "curl -L -o ${calicoctl_bin} ${calicoctl_url} && chmod 0755 ${calicoctl_bin}",
     path => $::path,
     unless => "test -f ${calicoctl_bin}"
+  } ->
+  systemd::unit { "calico-node.service":
+    start => true,
+    enable => true,
+    content => template('epflsti_coreos/calico-node.service.erb'),
+  }
+
+  systemd::unit { "calico-libnetwork.service":
+    start => true,
+    enable => true,
+    content => template('epflsti_coreos/calico-libnetwork.service.erb'),
   }
 }
