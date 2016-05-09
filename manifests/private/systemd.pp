@@ -44,6 +44,9 @@ class epflsti_coreos::private::systemd {
     } elsif ($name =~ /\.(socket)$/) {
       $_kind = "socket"
       $_subdir = "system"
+    } elsif ($name =~ /\.(timer)$/) {
+      $_kind = "timer"
+      $_subdir = "system"
     } else {
       fail("Cannot determine unit type for ${name}")
     }
