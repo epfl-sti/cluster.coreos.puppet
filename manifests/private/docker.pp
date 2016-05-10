@@ -62,17 +62,17 @@ WantedBy=sockets.target
   }
 
   # Poor man's "docker sync"
+  # See https://coreos.com/os/docs/latest/scheduling-tasks-with-systemd-timers.html
+  $docker_push_time_offset = seeded_rand(30, $::fqdn)
   systemd::unit { "docker-push.service":
     content => "[Unit]
 Description=\"docker push\" all that we have (periodic task)
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c \"docker images |grep ${::docker_registry} |cut -f1 -d' ' | xargs -n 1 docker push\"
+ExecStart=/bin/sh -c \"docker images |grep ${docker_registry_address} |cut -f1 -d' ' | xargs -n 1 docker push\"
 "
-  }
-  # See https://coreos.com/os/docs/latest/scheduling-tasks-with-systemd-timers.html
-  $docker_push_time_offset = seeded_rand(30, $::fqdn)
+  } ->
   systemd::unit { "docker-push.timer":
     content => "[Unit]
 Description=\"docker push\" all that we have every 30 mins
