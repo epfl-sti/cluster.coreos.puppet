@@ -126,7 +126,7 @@ class epflsti_coreos::private::systemd {
         }
       }
   
-      if ($_kind == "service") {
+      if ($_kind == "service" or $_kind == "timer") {
         if ($start == undef) {
           Anchor["systemd::unit_${name}::reloaded"] ~>
           exec { "Reloading systemd ${name}":
@@ -153,7 +153,7 @@ class epflsti_coreos::private::systemd {
             unless => "test $(systemctl is-active ${name}) = 'inactive'"
           }
         }
-      }  # if ($kind == "service")
+      }  # if ($_kind == "service" or $_kind == "timer")
     } else {  # $::lifecycle_stage != "production"
     
       file { $_systemd_unit_file:

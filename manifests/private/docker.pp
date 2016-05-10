@@ -61,9 +61,25 @@ WantedBy=sockets.target
     creates => "${rootpath}/opt/bin/pipework"
   }
 
-  exec { "Poor man's docker sync":
-    path => $::path,
-    command => "/bin/true",
-    onlyif => "${rootpath}/usr/bin/docker images|grep ${::docker_registry} |cut -f1 -d\  | xargs -n 1 ${rootpath}/usr/bin/docker push && /bin/false"
+  # Poor man's "docker sync"
+  systemd::unit { "docker-push.service":
+    content => "[Unit]
+Description=\"docker push\" all that we have (periodic task)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c \"docker images |grep ${::docker_registry} |cut -f1 -d' ' | xargs -n 1 docker push\"
+"
+  }
+  # See https://coreos.com/os/docs/latest/scheduling-tasks-with-systemd-timers.html
+  systemd::unit { "docker-push.timer":
+    content => "[Unit]
+Description=\"docker push\" all that we have every 30 mins
+
+[Timer]
+OnCalendar=*:0/30
+",
+    enable => true,
+    start => true
   }
 }
