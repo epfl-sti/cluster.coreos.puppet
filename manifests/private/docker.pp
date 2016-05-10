@@ -72,12 +72,13 @@ ExecStart=/bin/sh -c \"docker images |grep ${::docker_registry} |cut -f1 -d' ' |
 "
   }
   # See https://coreos.com/os/docs/latest/scheduling-tasks-with-systemd-timers.html
+  $docker_push_time_offset = seeded_rand(30, $::fqdn)
   systemd::unit { "docker-push.timer":
     content => "[Unit]
 Description=\"docker push\" all that we have every 30 mins
 
 [Timer]
-OnCalendar=*:0/30
+OnCalendar=*:${docker_push_time_offset}/30
 ",
     enable => true,
     start => true
