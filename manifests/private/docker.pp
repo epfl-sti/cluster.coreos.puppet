@@ -8,14 +8,20 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
+# [*docker_registry_address*]
+#   The address of the internal Docker registry service, in host:port format
+#
 # === Actions:
 #
-# * Add select flags to the command line of all dockerd's
+# * Change command line of all dockerd's to enable IPv6,
+#   etcd as the cluster store, and the internal registry without
+#   a certificate
 # * Restart the Docker daemon, except when bootstrapping
 # * Download /opt/bin/pipework from GitHub
 
 class epflsti_coreos::private::docker(
-  $rootpath                = $::epflsti_coreos::private::params::rootpath
+  $rootpath                = $::epflsti_coreos::private::params::rootpath,
+  $docker_registry_address = $::epflsti_coreos::private::params::docker_registry_address
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
@@ -47,11 +53,11 @@ WantedBy=sockets.target
     refreshonly => true,
   }
 
-  if ($::docker_registry) {
+  if ($docker_registry_address) {
     concat::fragment { "Private Docker registry in /etc/environment":
       order => '40',
       target => "/etc/environment",
-      content => "DOCKER_REGISTRY=${::docker_registry}\n"
+      content => "DOCKER_REGISTRY=${docker_registry_address}\n"
     }
   }
 
