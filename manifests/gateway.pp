@@ -71,6 +71,9 @@
 # * Change the default route to point to $external_ipv4_gateway
 #
 # Additionnally, iff $ipv6_advertise_prefix is set:
+#
+# * Run radvd
+#
 # And finally, iff $ipv4_outgoing_active is not undef:
 #
 # * Alias the ethbr4 interface to $::gateway_vip
