@@ -45,6 +45,9 @@
 # [*ipv6_advertise_prefix*]
 #   The /64 IPv6 prefix to use for SLAAC of the physical nodes.
 #
+# [*enable_boundary_caching*]
+#   If true, set up a transparent cache for egress HTTP traffic on port 80
+#
 # === Global Variables:
 #
 # [*$::gateway_vip*]
@@ -85,7 +88,8 @@ class epflsti_coreos::gateway(
   $external_addresses = [],
   $external_ipv4_gateway = undef,
   $ipv4_outgoing_active = undef,
-  $ipv6_advertise_prefix = undef
+  $ipv6_advertise_prefix = undef,
+  $enable_boundary_caching = true
 ) {
   validate_string($external_interface)
 
@@ -97,56 +101,66 @@ class epflsti_coreos::gateway(
   }
 
   validate_array($external_addresses)
-  $gateway_services_enabled = size($external_addresses) > 0
-  if ($gateway_services_enabled) {
+
+  # Feature selection
+  if (size($external_addresses) > 0) {
+    $_enable_gateway_routing = $external_ipv4_gateway and $ipv4_outgoing_active
+    $_enable_haproxy = true
+    $_enable_radvd = ($ipv6_advertise_prefix != undef)
+    $_enable_squid_and_transparent_proxying = $enable_boundary_caching
+  } else {
+    $_enable_gateway_routing = false
+    $_enable_haproxy = false
+    $_enable_radvd = false
+    $_enable_squid_and_transparent_proxying = false
+  }
+
+  # Set up external IPv4 addresses
+  # Template uses $external_interface, $external_addresses and
+  # $external_ipv4_gateway
+  if (size($external_addresses) > 0) {
     file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
       ensure => "present",
       content => template("epflsti_coreos/networkd/50-epflnet.network.erb")
     } ~> Exec["restart networkd in host"]
   } else {
+    file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
+      ensure => "absent"
+    }
     exec { "Flush addresses on ${external_interface}":
       command => "/sbin/ip addr flush dev ${external_interface}",
       onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q inet"
     }
   }
 
+  # haproxy for ingress traffic
+  # TODO: This is incompatible with Squid for egress traffic ()
   private::systemd::unit { "${::cluster_owner}.haproxy.service":
     # Uses $::public_web_domain
     content => template('epflsti_coreos/haproxy.service.erb'),
     start => ($::lifecycle_stage == "production"),
-    enable => $gateway_services_enabled
+    enable => $_enable_haproxy
   }
-  private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
-    content => template('epflsti_coreos/squid-in-a-can.service.erb'),
-    start => ($::lifecycle_stage == "production"),
-    enable => $gateway_services_enabled
-  }
-  $gateway_v6_services_enabled = $gateway_services_enabled and ($ipv6_advertise_prefix != undef)
   private::systemd::unit { "${::cluster_owner}.ipv6.radvd.service":
     content => template('epflsti_coreos/radvd.service.erb'),
     start => ($::lifecycle_stage == "production"),
-    enable => $gateway_v6_services_enabled
+    enable => $_enable_radvd
   }
   
-  if ($external_ipv4_gateway and $ipv4_outgoing_active) {
+  if ($_enable_gateway_routing) {
     exec { "Enable gateway VIP":
       path => $path,
       command => "/sbin/ip addr add ${::gateway_vip}/24 dev ethbr4",
       unless => "/sbin/ip addr show |grep -qw ${::gateway_vip}"
     } 
+    exec { "Disable default route through ethbr4":
+      command => "/sbin/ip route del default dev ethbr4",
+      onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
+    }
     exec { "Enable masquerading":
       path => $path,
       command => "/sbin/iptables -t nat -A POSTROUTING -o ${external_interface} -j MASQUERADE",
       unless => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
-    }
-    exec { "Enable transparent forwarding":
-      path => $path,
-      command => "/sbin/iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w",
-      unless => "/sbin/iptables -t nat -L -v |grep 3129",
-    }
-    exec { "Disable default route through ethbr4":
-      command => "/sbin/ip route del default dev ethbr4",
-      onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
     }
   } else {
     exec { "Disable gateway VIP":
@@ -154,19 +168,30 @@ class epflsti_coreos::gateway(
       command => "/sbin/ip addr del ${::gateway_vip}/24 dev ethbr4",
       onlyif => "/sbin/ip addr show | grep -qw ${::gateway_vip}"
     } 
+    exec { "Disable default route through ${external_interface}":
+      command => "/sbin/ip route del default dev ${external_interface}",
+      onlyif => "/sbin/ip route show dev ${external_interface} | grep -q ^default"
+    }
     exec { "Disable masquerading":
       path => $path,
       command => "/sbin/iptables -t nat -D POSTROUTING -o ${external_interface} -j MASQUERADE",
       onlyif => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
     } 
-    exec { "Disable transparent forwarding":
-      path => $path,
-      command => "/sbin/iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w",
-      onlyif => "/sbin/iptables -t nat -L -v |grep 3129",
-    }
-    exec { "Disable default route through ${external_interface}":
-      command => "/sbin/ip route del default dev ${external_interface}",
-      onlyif => "/sbin/ip route show dev ${external_interface} | grep -q ^default"
-    }
+  }
+
+  # Set up / tear down Squid and transparent proxying
+  $_iptables_spec = "-p tcp -d '!'${::ipv4_network} --dport 80 -j REDIRECT --to 3129 -w"
+  private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
+    content => template('epflsti_coreos/squid-in-a-can.service.erb'),
+    start => ($::lifecycle_stage == "production"),
+    enable => $_enable_squid_and_transparent_proxying
+  }
+  exec { "Set up transparent forwarding":
+    path => $path,
+    command => "/bin/false",
+    unless => inline_template("/bin/true ;
+enabled=${_enable_squid_and_transparent_proxying}
+<%= scope.function_template([\"epflsti_coreos/setup_transparent_proxy.sh\"]) %>
+")
   }
 }
