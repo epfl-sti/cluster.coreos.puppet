@@ -25,4 +25,11 @@ class epflsti_coreos::private::params {
   $docker_puppet_image_name = "cluster.coreos.puppet"
 
   $etcd2_quorum_members = $::quorum_members
+
+  $ipv6_physical_network = $::ipv6_physical_network   # From Foreman
+  $ipv6_physical_netmask = inline_template('<%= @ipv6_physical_network.split("/")[1] %>')
+  # Deduct IPv6 address from the last digits in the IPv4 address. Yes,
+  # "real" hexadecimal is expected in IPv6 CIDR; but we keep the faux
+  # decimal because it makes typing IPv6 addresses easier.
+  $ipv6_physical_address = inline_template('<%= @ipv6_physical_network.split("/")[0] + @ipaddress.split(".")[-1] %>')
 }

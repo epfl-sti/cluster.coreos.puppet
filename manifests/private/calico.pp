@@ -9,6 +9,15 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
+# === Actions:
+#
+# * Run Calico on the local node
+#
+# === Pre-requisites:
+#
+# $::ipaddress6 must be set up on the correct interface
+# (see networking.pp)
+#
 class epflsti_coreos::private::calico (
   $calicoctl_url = "http://www.projectcalico.org/builds/calicoctl",
   $rootpath = $epflsti_coreos::private::params::rootpath,

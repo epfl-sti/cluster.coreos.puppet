@@ -42,9 +42,6 @@
 #   configured with an active-active setup (although this is not
 #   implemented yet)
 #
-# [*ipv6_advertise_prefix*]
-#   The /64 IPv6 prefix to use for SLAAC of the physical nodes.
-#
 # [*enable_boundary_caching*]
 #   If true, set up a transparent cache for egress HTTP traffic on port 80
 #
@@ -73,11 +70,7 @@
 # * Activate IPv4 masquerading through $external_interface
 # * Change the default route to point to $external_ipv4_gateway
 #
-# Additionnally, iff $ipv6_advertise_prefix is set:
-#
-# * Run radvd
-#
-# And finally, iff $ipv4_outgoing_active is not undef:
+# Additionnally, iff $ipv4_outgoing_active is not undef:
 #
 # * Alias the ethbr4 interface to $::gateway_vip
 # * Set up IPv4 masquerading
@@ -88,7 +81,6 @@ class epflsti_coreos::gateway(
   $external_addresses = [],
   $external_ipv4_gateway = undef,
   $ipv4_outgoing_active = undef,
-  $ipv6_advertise_prefix = undef,
   $enable_boundary_caching = true
 ) {
   validate_string($external_interface)
@@ -106,12 +98,10 @@ class epflsti_coreos::gateway(
   if (size($external_addresses) > 0) {
     $_enable_gateway_routing = $external_ipv4_gateway and $ipv4_outgoing_active
     $_enable_haproxy = true
-    $_enable_radvd = ($ipv6_advertise_prefix != undef)
     $_enable_squid_and_transparent_proxying = $enable_boundary_caching
   } else {
     $_enable_gateway_routing = false
     $_enable_haproxy = false
-    $_enable_radvd = false
     $_enable_squid_and_transparent_proxying = false
   }
 
@@ -140,11 +130,6 @@ class epflsti_coreos::gateway(
     content => template('epflsti_coreos/haproxy.service.erb'),
     start => ($::lifecycle_stage == "production"),
     enable => $_enable_haproxy
-  }
-  private::systemd::unit { "${::cluster_owner}.ipv6.radvd.service":
-    content => template('epflsti_coreos/radvd.service.erb'),
-    start => ($::lifecycle_stage == "production"),
-    enable => $_enable_radvd
   }
   
   if ($_enable_gateway_routing) {

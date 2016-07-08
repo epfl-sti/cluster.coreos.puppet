@@ -9,6 +9,7 @@ Name=ethbr4
 
 [Network]
 Address=<%= @ipaddress %>/24
+Address=<%= @ipv6_physical_address %>/<%= @ipv6_physical_netmask %>
 <% if @uses_internal_gateway -%>
 Gateway=<%= @gateway_vip %>
 <% end -%>

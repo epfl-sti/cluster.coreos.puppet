@@ -1,4 +1,4 @@
-# Configure networking pre-bootstrap.
+# Configure networking pre-bootstrap (IPv4 and IPv6).
 #
 # The physical interfaces of each CoreOS node are partitioned into
 # *internal* (tied to the internal network - The vast majority of
@@ -18,6 +18,23 @@
 # IP", or VIP) can stay the same, and the clients will catch up (after
 # their ARP timeout expires) with zero reconfiguration.
 #
+# IPv6 configuration is also handled here. We can't SLAAC, because in
+# Calico-land all hosts are routers and routers don't listen to router
+# advertisement packets. Also, it's just smarter to use
+# easy-to-memorize IPv6 addresses.
+#
+# === Parameters:
+#
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
+#
+# [*$ipv6_physical_address*]
+#   The IPv6 address to use.
+#
+# [*$ipv6_physical_netmask*]
+#   The IPv6 netmask to use.
+#
 # === Actions:
 #
 # * Set the FQDN in /etc/hostname, as is the CoreOS way
@@ -34,6 +51,8 @@
 #   address of the first (internal) physical interface. Enlist
 #   either bond0 or the sole internal interface into it.
 #
+# * Set up the IPv6 address as per the parameters (no IPv6 routing)
+#
 # * Set up the default route and DNS server, in a way that lets
 #   gateway.pp override the former seamlessly
 #
@@ -47,7 +66,9 @@
 # have no effect, until one restarts networkd by hand.
 
 class epflsti_coreos::private::networking(
-  $rootpath = $::epflsti_coreos::private::params::rootpath
+  $rootpath = $::epflsti_coreos::private::params::rootpath,
+  $ipv6_physical_address = $epflsti_coreos::private::params::ipv6_physical_address,
+  $ipv6_physical_netmask = $epflsti_coreos::private::params::ipv6_physical_netmask
 ) inherits epflsti_coreos::private::params {
 
   include ::epflsti_coreos::private::systemd
