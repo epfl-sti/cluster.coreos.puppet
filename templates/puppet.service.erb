@@ -19,12 +19,14 @@ ExecStart=/usr/bin/docker run <% -%>
   -v /etc/puppet:/etc/puppet <% -%>
   -v /var/lib/puppet:/var/lib/puppet <% -%>
   -v /var/run/docker.sock:/var/run/docker.sock <% -%>
+  -v /var/run/fleet.sock:/var/run/fleet.sock <% -%>
   -v /home/core:/home/core <% -%>
   -v /etc/os-release:/etc/os-release:ro <% -%>
   -v /etc/lsb-release:/etc/lsb-release:ro <% -%>
   -v /etc/coreos:/etc/coreos:rw <% -%>
   -v /run:/run:ro <% -%>
   -v /usr/bin/systemctl:/usr/bin/systemctl:ro <% -%>
+  -v /usr/bin/fleetctl:/usr/bin/fleetctl:ro <% -%>
   -v /lib64:/lib64:ro <% -%>
   -v /lib/modules:/lib/modules:ro <% -%>
   -v /usr/lib64/systemd:/usr/lib64/systemd <% -%>
