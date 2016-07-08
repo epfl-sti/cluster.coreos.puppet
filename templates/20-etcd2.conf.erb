@@ -12,8 +12,8 @@ Environment="ETCD_NAME=<%= @fqdn %>"
 # state in /var/lib/etcd2 (i.e., fresh reinstall)
 Environment="ETCD_INITIAL_CLUSTER=<% @members.each do |k,v| -%>
 <%= k %>=http://<%= v %>:2380,<% end -%>"
-<% if @is_proxy %>
-Environment="ETCD_PROXY=on"
-<% else %>
+<% if @is_member %>
 Environment="ETCD_INITIAL_CLUSTER_STATE=existing"
+<% else %>
+Environment="ETCD_PROXY=on"
 <% end %>

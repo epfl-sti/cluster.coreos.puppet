@@ -28,6 +28,14 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
+# === Variables:
+#
+# [*is_member*]
+#    True iff this node is an etcd2 quorum member. Non-members
+#    have a proxy etcd2 instead, so that "ordinary" etcd2 clients
+#    need not know or care whether $is_member is true; rather,
+#    this variable is for use for "quorum-only" tasks within Puppet.
+#
 # === See also:
 #
 # * paragraph "Add a New Member" in
@@ -53,7 +61,7 @@ class epflsti_coreos::private::etcd2(
   $members = parseyaml($etcd2_quorum_members)
   validate_hash($members)
 
-  $is_proxy = empty(intersection([$::ipaddress], values($members)))
+  $is_member = !empty(intersection([$::ipaddress], values($members)))
 
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"
@@ -72,7 +80,7 @@ class epflsti_coreos::private::etcd2(
     subscribe => File["/etc/systemd/system/etcd2.service.d/20-puppet.conf"]
   }
 
-  if ($is_proxy) {
+  if (! $is_member) {
     # Poor man's monitoring for proxies, to work around
     # https://groups.google.com/d/msg/coreos-user/OuqvJIRAtho/VJ0NMo5BAgAJ
     exec { "restart desynched proxy":
