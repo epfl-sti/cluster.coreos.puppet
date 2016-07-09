@@ -71,7 +71,17 @@ class epflsti_coreos::private::etcd2(
     content => template("epflsti_coreos/20-etcd2.conf.erb")
   }
 
-  $_restart_etcd2_clean = "systemctl stop etcd2.service && rm -rf ${rootpath}/var/lib/etcd2/proxy && systemctl start etcd2.service"
+  $_restart_etcd2_clean = inline_template("set -e -x
+      systemctl stop etcd2.service
+      (
+        cd ${rootpath}/var/lib/etcd2
+        rm -rf proxy
+        <% if ! @is_member %>
+        mv member member.BAK-$(date '+%Y%m%d') || true
+        <% end %>
+        <%end 
+      )
+      systemctl start etcd2.service")
 
   exec { "reload systemd configuration and start etcd2":
     refreshonly => true,
