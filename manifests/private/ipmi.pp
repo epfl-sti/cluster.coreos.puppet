@@ -17,6 +17,16 @@ class epflsti_coreos::private::ipmi() {
     require => Anchor["dev_ipmi0_available"]
   }
 
+  # TODO: this is Nemesis-specific. Use proper net address variables
+  $expected_ipmi_ipaddress = inline_template("<%= @ipaddress.sub('192.168.11', '192.168.10') %>")
+  if ($expected_ipmi_ipaddress != $::ipmi_ipaddress) {
+    exec { "correct IPMI address":
+      command => "ipmitool lan set 1 ipaddr ${expected_ipmi_ipaddress}",
+      path => $::path,
+      require => Anchor["dev_ipmi0_available"]
+    }
+  }
+
   case $::boardproductname {
     "X7DBT": {
       exec { "Create user root":
