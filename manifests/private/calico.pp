@@ -26,9 +26,13 @@ class epflsti_coreos::private::calico (
 
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
   exec { "curl calicoctl":
-    command => "curl -L -o ${calicoctl_bin} ${calicoctl_url} && chmod 0755 ${calicoctl_bin}",
+    command => "curl -L -o ${calicoctl_bin} ${calicoctl_url}",
     path => $::path,
-    unless => "test -f ${calicoctl_bin}"
+    creates => "${calicoctl_bin}"
+  } ->
+  file { "${calicoctl_bin}":
+    ensure => "file",
+    mode => "0755"
   } ->
   systemd::unit { "calico-node.service":
     start => true,
