@@ -17,7 +17,7 @@
 #
 # * Update /home/core/.ssh/authorized_keys
 #
-# * Set sane /etc/ssh/ssh_config (steady-state only, not at bootstrap time)
+# * Set sane /etc/ssh/ssh_config
 #
 class epflsti_coreos::private::ssh(
   $rootpath = $epflsti_coreos::private::params::rootpath
@@ -37,6 +37,8 @@ class epflsti_coreos::private::ssh(
     $type = undef,
     $key = undef
   ) {
+    validate_re($type, ['^rsa|dsa|ed25519$'])
+    validate_string($key)
     # "@@" means that that resource is a so-called "exported" resource
     # (marked as such in puppetdb). Query resources like so (from
     # the puppetmaster):
