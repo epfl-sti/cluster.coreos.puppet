@@ -22,6 +22,9 @@ TOOLBOX_DOCKER_TAG=latest
       command => "/usr/bin/true",
       unless => "/usr/bin/env DOCKER_HOST=unix:///opt/root/var/run/docker.sock /opt/root/usr/bin/docker pull epflsti/cluster.coreos.toolbox || true"
     }
+
+    class { "::epflsti_coreos::private::comfort::tmux":
+    }
   }
 
   file { "/home/core/.bash_history":
@@ -38,40 +41,5 @@ TOOLBOX_DOCKER_TAG=latest
     mode => '0755',
     content => template("epflsti_coreos/fleetcheck.erb"),
     require => File["${rootpath}/opt/bin"]
-  }
-
-  ########################### tmux ###################################
-  $tmux_bin = "${rootpath}/opt/bin/tmux"
-  $tmux_url = "https://github.com/epfl-sti/cluster.coreos.tmux/raw/master/tmux.gz"
-  exec { "curl for /opt/bin/tmux":
-    command => "curl -L -o ${tmux_bin} ${calicoctl_url}",
-    path => $::path,
-    creates => $tmux_bin
-  }
-
-  # Set up /dev/ptmx; only useful for ancient CoreOS (c35) afaict
-  exec { "create /dev/ptmx":
-    command => "set -e -x; rm ${rootpath}/dev/ptmx; mknod ${rootpath}/dev/ptmx c 5 2",
-    path => $::path,
-    unless => "test -c ${rootpath}/dev/ptmx"
-  } ->
-  file { "${rootpath}/dev/ptmx":
-    owner => 'root',
-    group => 'tty',
-    mode => '0666'
-  }
-
-  systemd::unit { "tmux-permanent.service":
-    content => "[Unit]
-Description=Permanent tmux sessions for user core (survive container death upon ssh exit)
-[Service]
-ExecStart=/opt/bin/tmux -C
-User=core
-Group=core
-RemainAfterExit=yes
-",
-    enable => true,
-    start => true
-  }
-    
+  }    
 }
