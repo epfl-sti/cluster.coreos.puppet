@@ -1,6 +1,6 @@
 # Configure Kubernetes
 #
-# Based on http://kubernetes.io/docs/getting-started-guides/docker-multinode/master/
+# Based on https://coreos.com/kubernetes/docs/latest/deploy-master.html
 #
 # === Parameters:
 #
@@ -19,7 +19,6 @@
 # [*is_master*]
 #    Whether this is a Kubernetes master node.
 #
-
 class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.4.5",
   $kubernetes_masters = $::epflsti_coreos::private::params::kubernetes_masters,
@@ -42,35 +41,43 @@ class epflsti_coreos::private::kubernetes(
     $_master_address = $kubernetes_masters[0]
   }
 
-  systemd::unit { "hyperkube-master.service":
+  systemd::unit { "kubernetes.service":
       content => "[Unit]
-Description=Kubernetes master in a box (Docker)
-After=docker.service
-Requires=docker.service
+Description=Kubernetes in a box (Docker)
+After=docker.service calico-node.service calico-libnetwork.service
+Requires=docker.service calico-node.service calico-libnetwork.service
 
 [Service]
-ExecStartPre=/bin/bash -c '/usr/bin/docker rm -f %n || true'
-EnvironmentFile=/etc/environment
-ExecStart=/usr/bin/docker run \
-    --name %n \
-    --volume=/:/rootfs:ro \
-    --volume=/sys:/sys:ro \
-    --volume=/var/lib/docker/:/var/lib/docker:rw \
-    --volume=/var/lib/kubelet/:/var/lib/kubelet:rw \
-    --volume=/var/run:/var/run:rw \
-    --net=host \
-    --privileged=true \
-    --pid=host \
-    gcr.io/google_containers/hyperkube-amd64:v${k8s_version} \
-    /hyperkube kubelet \
-        --allow-privileged=true \
-        --api-servers=http://${_master_address}:8080 \
-        --v=2 \
-        --address=0.0.0.0 \
-        --enable-server \
-        --config=/etc/kubernetes/manifests-multi \
-        --containerized
+ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
+ExecStartPre=/usr/bin/mkdir -p /var/log/containers
+
+Environment=KUBELET_VERSION=v${k8s_version}_coreos.0
+Environment=\"RKT_OPTS=--volume modprobe,kind=host,source=/usr/sbin/modprobe \
+  --mount volume=modprobe,target=/usr/sbin/modprobe \
+  --volume lib-modules,kind=host,source=/lib/modules \
+  --mount volume=lib-modules,target=/lib/modules \
+  --volume var-log,kind=host,source=/var/log \
+  --mount volume=var-log,target=/var/log \
+  --volume dns,kind=host,source=/etc/resolv.conf \
+  --mount volume=dns,target=/etc/resolv.conf\"
+
+ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper \
+  --api-servers=http://127.0.0.1:8080 \
+  --network-plugin-dir=/etc/kubernetes/cni/net.d \
+  --network-plugin=cni \
+  --register-schedulable=false \
+  --allow-privileged=true \
+  --config=/etc/kubernetes/manifests \
+  --cluster-dns=${::dns_vip} \
+  --cluster-domain=cluster.local
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 ",
+    enable => true,
     start => true
   }
 
