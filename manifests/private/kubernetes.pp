@@ -78,7 +78,8 @@ RestartSec=10
 WantedBy=multi-user.target
 ",
     enable => true,
-    start => true
+    start => true,
+    require => [ Anchor["systemd::unit_calico-node.service::reloaded"], Anchor["systemd::unit_calico-libnetwork.service::reloaded"] ]
   }
 
   $_kubectl_path = "${rootpath}/opt/bin/kubectl"
