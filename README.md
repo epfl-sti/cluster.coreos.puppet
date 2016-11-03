@@ -29,7 +29,7 @@ Upload the image:
 
 # Why Puppet on CoreOS?
 
-At EPFL-STI, we [provision bare metal with Foreman](https://github.com/epfl-sti/cluster.foreman). We are currently [infatuated with CoreOS](https://github.com/epfl-sti/cluster.foreman), which has its [`cloud-config.yaml`](https://coreos.com/os/docs/latest/cloud-config.html) system, but even they say right in that page that "[i]t is not intended to be a Chef/Puppet replacement".
+At EPFL-STI, we [provision bare metal with Foreman](https://github.com/epfl-sti/cluster.foreman). We are currently [infatuated with CoreOS](https://github.com/epfl-sti/cluster.foreman), which has its [`cloud-config.yaml`](https://coreos.com/os/docs/latest/cloud-config.html) system, but even they say right there in that page that "[i]t is not intended to be a Chef/Puppet replacement".
 
 In our CoreOS clusters, Puppet + Foreman integration provides us with the following benefits:
 * End-to-end automation for node provisioning (i.e. installation and configuration), including [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface), means you can treat nodes as [cattle, not pets](https://news.ycombinator.com/item?id=7311704)
