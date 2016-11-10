@@ -20,65 +20,29 @@
 #    Whether this is a Kubernetes master node.
 #
 class epflsti_coreos::private::kubernetes(
-  $k8s_version = "1.4.3",
+  $k8s_version = "1.4.5",
   $kubernetes_masters = $::epflsti_coreos::private::params::kubernetes_masters,
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   $is_master = !empty(intersection([$::fqdn], $kubernetes_masters))
+  $master_count = size($kubernetes_masters)
+  $kube_quay_version = "v${k8s_version}_coreos.0"
+  $api_server_urls = inline_template('<%= @kubernetes_masters.map { |host| "https://#{host}/" }.join "," %>')
+  # Quite unfortunately needed, pending resolution of https://github.com/kubernetes/kubernetes/issues/18174:
+  $first_apiserver = inline_template('<%= @kubernetes_masters[0] %>')
 
-  concat::fragment { "K8S_VERSION in /etc/environment":
+  concat::fragment { "K8S_VERSION and KUBELET_VERSION in /etc/environment":
       target => "/etc/environment",
       order => '20',
-      content => inline_template("K8S_VERSION=${k8s_version}\n")
+      content => inline_template("K8S_VERSION=${k8s_version}\nKUBELET_VERSION=${kube_quay_version}\n")
   }
 
-  class { "epflsti_coreos::private::kubernetes::keys": }
-
-  if ($is_master) {
-    $_master_address = "localhost"
-  } else {
-    # Hmm. This is certainly sub-optimal in some way
-    $_master_address = $kubernetes_masters[0]
+  class { "epflsti_coreos::private::kubernetes::keys":
+    is_master => $is_master
   }
 
-  $kube_quay_version = "v${k8s_version}_coreos.0"
   systemd::unit { "kubernetes.service":
-      content => "[Unit]
-Description=Kubernetes in a box (Docker)
-After=docker.service calico-node.service calico-libnetwork.service
-Requires=docker.service calico-node.service calico-libnetwork.service
-
-[Service]
-ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
-ExecStartPre=/usr/bin/mkdir -p /var/log/containers
-
-Environment=KUBELET_VERSION=${kube_quay_version}
-Environment=\"RKT_OPTS=--volume modprobe,kind=host,source=/usr/sbin/modprobe \
-  --mount volume=modprobe,target=/usr/sbin/modprobe \
-  --volume lib-modules,kind=host,source=/lib/modules \
-  --mount volume=lib-modules,target=/lib/modules \
-  --volume var-log,kind=host,source=/var/log \
-  --mount volume=var-log,target=/var/log \
-  --volume dns,kind=host,source=/etc/resolv.conf \
-  --mount volume=dns,target=/etc/resolv.conf\"
-
-ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper \
-  --api-servers=http://127.0.0.1:8080 \
-  --network-plugin-dir=/etc/kubernetes/cni/net.d \
-  --network-plugin=cni \
-  --register-schedulable=false \
-  --allow-privileged=true \
-  --config=/etc/kubernetes/manifests \
-  --hostname-override=${::fqdn} \
-  --cluster-dns=${::dns_vip} \
-  --cluster-domain=cluster.local
-
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-",
+      content => template("epflsti_coreos/kubernetes.service.erb"),
     enable => true,
     start => true,
     require => [ Anchor["systemd::unit_calico-node.service::reloaded"], Anchor["systemd::unit_calico-libnetwork.service::reloaded"] ]
@@ -91,11 +55,8 @@ WantedBy=multi-user.target
     unless => "grep v${k8s_version} ${_kubectl_path}"
   }
 
-  if ($is_master) {
-    file { "${rootpath}/etc/kubernetes/manifests":
-      ensure => "directory"
-    }
-    file { "${rootpath}/etc/kubernetes/manifests/kube-apiserver.yaml":
+  kubelet_service { "kube-apiserver":
+      enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
 metadata:
@@ -111,8 +72,9 @@ spec:
     - apiserver
     - --bind-address=0.0.0.0
     - --etcd-servers=http://${::ipaddress}:2379
+    - --apiserver-count=${master_count}
     - --allow-privileged=true
-    - --service-cluster-ip-range=172.16.0.0/16
+    - --service-cluster-ip-range=192.168.12.0/24
     - --secure-port=443
     - --advertise-address=${::ipaddress}
     - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
@@ -143,9 +105,12 @@ spec:
       path: /usr/share/ca-certificates
     name: ssl-certs-host
 "
-    }
-    file { "${rootpath}/etc/kubernetes/manifests/kube-proxy.yaml":
-      content => "apiVersion: v1
+  }  # kubelet_service "kube-apiserver"
+
+  kubelet_service { "kube-proxy":
+      enable => true,  # "The Kubernetes network proxy runs on each node"
+                       # (http://kubernetes.io/docs/admin/kube-proxy/)
+      content => inline_template("apiVersion: v1
 kind: Pod
 metadata:
   name: kube-proxy
@@ -158,21 +123,67 @@ spec:
     command:
     - /hyperkube
     - proxy
+<%- if @is_master -%>
     - --master=http://127.0.0.1:8080
+<%- else -%>
+    - --kubeconfig=/etc/kubernetes/worker-kubeconfig.yaml
+<%- end -%>
     - --proxy-mode=iptables
     securityContext:
       privileged: true
     volumeMounts:
     - mountPath: /etc/ssl/certs
-      name: ssl-certs-host
+      name: ssl-certs
       readOnly: true
+<%- if ! @is_master -%>
+    - mountPath: /etc/kubernetes/worker-kubeconfig.yaml
+      name: kubeconfig
+      readOnly: true
+    - mountPath: /etc/kubernetes/ssl
+      name: etc-kube-ssl
+      readOnly: true
+<%- end -%>
   volumes:
-  - hostPath:
+  - name: ssl-certs
+    hostPath:
       path: /usr/share/ca-certificates
-    name: ssl-certs-host
+<%- if ! @is_master -%>
+  - name: kubeconfig
+    hostPath:
+      path: /etc/kubernetes/worker-kubeconfig.yaml
+  - name: etc-kube-ssl
+    hostPath:
+      path: /etc/kubernetes/ssl
+<%- end -%>
+")
+  }  # kubelet_service "kube-proxy"
+
+  if (! $is_master) {
+    file { "${rootpath}/etc/kubernetes/worker-kubeconfig.yaml":
+      content => "apiVersion: v1
+kind: Config
+clusters:
+- name: local
+  cluster:
+    certificate-authority: /etc/kubernetes/ssl/ca.pem
+    server: https://${first_apiserver}
+users:
+- name: kubelet
+  user:
+    client-certificate: /etc/kubernetes/ssl/${::fqdn}-worker.pem
+    client-key: /etc/kubernetes/ssl/${::fqdn}-worker-key.pem
+contexts:
+- context:
+    cluster: local
+    user: kubelet
+  name: kubelet-context
+current-context: kubelet-context
 "
-    }
-    file { "${rootpath}/etc/kubernetes/manifests/kube-scheduler.yaml":
+    }  # /etc/kubernetes/worker-kubeconfig.yaml
+  }  # ! is_master
+  
+  kubelet_service { "kube-scheduler":
+      enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
 metadata:
@@ -196,9 +207,7 @@ spec:
       initialDelaySeconds: 15
       timeoutSeconds: 1
 "
-    }
-  }  # $is_master
-
+  }
   file { ["${rootpath}/etc/kubernetes/cni", "${rootpath}/etc/kubernetes/cni/net.d"] :
     ensure => "directory"
   } ->
@@ -218,5 +227,25 @@ spec:
         }
     }
 }"
+  }
+
+  define kubelet_service (
+    $enable = true,
+    $content = undef,
+    $rootpath = $::epflsti_coreos::private::params::rootpath
+  ) {
+    if ($enable) {
+      validate_string($content);
+    ensure_resource("file", ["${rootpath}/etc/kubernetes",
+                             "${rootpath}/etc/kubernetes/manifests"],
+                            { ensure => "directory" })
+      file { "${rootpath}/etc/kubernetes/manifests/${name}.yaml":
+        content => $content
+      }
+    } else {
+      file { "${rootpath}/etc/kubernetes/manifests/${name}.yaml":
+        ensure => "absent"
+      }
+    }
   }
 }

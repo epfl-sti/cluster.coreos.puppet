@@ -1,0 +1,53 @@
+;; Managed by Puppet; do not edit.
+<%# See: https://coreos.com/kubernetes/docs/latest/deploy-master.html and
+         https://coreos.com/kubernetes/docs/latest/deploy-workers.html %>
+
+[Unit]
+Description=Kubelet in a box (Docker)
+After=docker.service calico-node.service calico-libnetwork.service
+Requires=docker.service calico-node.service calico-libnetwork.service
+
+[Service]
+ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
+ExecStartPre=/usr/bin/mkdir -p /var/log/containers
+
+EnvironmentFile=/etc/environment
+<% if @is_master %>
+Environment="RKT_OPTS=--volume modprobe,kind=host,source=/usr/sbin/modprobe <% -%>
+  --mount volume=modprobe,target=/usr/sbin/modprobe <% -%>
+  --volume lib-modules,kind=host,source=/lib/modules <% -%>
+  --mount volume=lib-modules,target=/lib/modules <% -%>
+  --volume var-log,kind=host,source=/var/log <% -%>
+  --mount volume=var-log,target=/var/log <% -%>
+  --volume dns,kind=host,source=/etc/resolv.conf <% -%>
+  --mount volume=dns,target=/etc/resolv.conf"
+<% else %>
+Environment="RKT_OPTS=--volume var-log,kind=host,source=/var/log <% -%>
+  --mount volume=var-log,target=/var/log <% -%>
+  --volume dns,kind=host,source=/etc/resolv.conf <% -%>
+  --mount volume=dns,target=/etc/resolv.conf"
+<% end %>
+
+ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper <% -%>
+  --api-servers=<%= @is_master ? "http://127.0.0.1:8080": @api_server_urls %> <% -%>
+  --network-plugin-dir=/etc/kubernetes/cni/net.d <% -%>
+  --network-plugin=cni <% -%>
+  <%- if @is_master -%>
+  --register-schedulable=false <% -%>
+  <%- else -%>
+  --register-node=true <% -%>
+  --kubeconfig=/etc/kubernetes/worker-kubeconfig.yaml <% -%>
+  --tls-cert-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker.pem <% -%>
+  --tls-private-key-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker-key.pem <% -%>
+  <%- end -%>
+  --allow-privileged=true <% -%>
+  --config=/etc/kubernetes/manifests <% -%>
+  --hostname-override=<%= @fqdn -%>
+  --cluster-dns=<%= @dns_vip -%>
+  --cluster-domain=cluster.local
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
