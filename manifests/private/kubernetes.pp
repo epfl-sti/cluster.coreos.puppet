@@ -19,6 +19,12 @@
 # [*is_master*]
 #    Whether this is a Kubernetes master node.
 #
+# === Bootstrapping:
+#
+# This class does *not* configure or start the Kubelet. This is done in ancillary
+# class epflsti_coreos::private::kubernetes::kubelet_service, at "production-ready"
+# stage (see ../init.pp for details on what that is).
+
 class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.4.5",
   $kubernetes_masters = $::epflsti_coreos::private::params::kubernetes_masters,
@@ -40,18 +46,11 @@ KUBELET_VERSION=<%= kube_quay_version %>
 ")
   }
 
-  systemd::unit { "kubernetes.service":
-      content => template("epflsti_coreos/kubernetes.service.erb"),
-    enable => true,
-    start => true,
-    require => [ Anchor["systemd::unit_calico-node.service::reloaded"], Anchor["systemd::unit_calico-libnetwork.service::reloaded"] ]
-  }
-
   $_kubectl_path = "${rootpath}/opt/bin/kubectl"
   exec { "Download kubectl":
     path => $::path,
     command => "wget -O ${_kubectl_path} http://storage.googleapis.com/kubernetes-release/release/v${k8s_version}/bin/linux/amd64/kubectl && chmod 755 ${_kubectl_path}",
-    unless => "grep v${k8s_version} ${_kubectl_path}"
+    unless => "grep v${k8s_version} ${_kubectl_path}",
   }
 
   kubelet_service { "kube-apiserver":

@@ -29,6 +29,10 @@ Environment="RKT_OPTS=--volume var-log,kind=host,source=/var/log <% -%>
 <% end %>
 
 ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper <% -%>
+  <%# --api-servers is required, despite the info being duplicated from --kubeconfig.
+    # If --api-servers is omitted, Kubelet says:
+    # kubelet.go:1160] No api server defined - no node status update will be sent.
+    # -%>
   --api-servers=<%= @is_master ? "http://127.0.0.1:8080": @api_server_urls %> <% -%>
   --network-plugin-dir=/etc/kubernetes/cni/net.d <% -%>
   --network-plugin=cni <% -%>

@@ -38,9 +38,11 @@ class epflsti_coreos() {
     class { "epflsti_coreos::private::docker": }
     class { "epflsti_coreos::private::etcd2":  }
     class { "epflsti_coreos::private::calico":  }
+    class { "epflsti_coreos::private::kubernetes": }
 
     ######################## THE FINISHING TOUCH #########################
-    # Don't join the Fleet cluster until everything else is set up.
+    # Don't join the distributed computing clusters (Fleet, Kubernetes) until
+    # everything else is set up.
     # Note: the Puppet update dance may yet restart Puppet (but not Docker,
     # since exec { "restart docker in host": } in docker.pp is guaranteed
     # never to complete if invoked)
@@ -53,6 +55,12 @@ class epflsti_coreos() {
         require => Stage["main"]
       }
       class { "epflsti_coreos::private::fleet":
+        stage => "production-ready"
+      }
+      # The rest of the Kubernetes configuration is in
+      # epflsti_coreos::private::kubernetes, which runs in Stage["main"] so
+      # as to avoid dependency loops.
+      class { "epflsti_coreos::private::kubernetes::start_kubelet":
         stage => "production-ready"
       }
     }
