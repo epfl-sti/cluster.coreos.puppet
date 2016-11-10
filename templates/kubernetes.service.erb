@@ -36,7 +36,7 @@ ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper <% -%>
   --register-schedulable=false <% -%>
   <%- else -%>
   --register-node=true <% -%>
-  --kubeconfig=/etc/kubernetes/worker-kubeconfig.yaml <% -%>
+  --kubeconfig=<%= @kubeconfig_path %> <% -%>
   --tls-cert-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker.pem <% -%>
   --tls-private-key-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker-key.pem <% -%>
   <%- end -%>

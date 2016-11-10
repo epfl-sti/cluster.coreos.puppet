@@ -25,6 +25,8 @@ class epflsti_coreos::private::params {
   $docker_puppet_image_name = "cluster.coreos.puppet"
 
   $etcd2_quorum_members = $::quorum_members
+  $_quorum_members = parseyaml($::quorum_members)
+  $kubernetes_masters = parseyaml(inline_template('<%= @_quorum_members.keys().to_yaml %>'))
 
   $ipv6_physical_network = $::ipv6_physical_network   # From Foreman
   $ipv6_physical_netmask = inline_template('<%= @ipv6_physical_network.split("/")[1] %>')

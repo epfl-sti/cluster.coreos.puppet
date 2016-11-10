@@ -31,17 +31,29 @@ class epflsti_coreos::private::kubernetes::keys(
       require => File["${rootpath}/etc/kubernetes/ssl"]
     }
   } else {
+    $worker_key_file = "${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker-key.pem"
+    $worker_cert_file = "${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker.pem"
     exec { "copy agent key for worker Kubelet":
-      command => "cp -a /etc/puppet/ssl/private_keys/${::fqdn}.pem  ${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker-key.pem",
+      command => "cp -a /etc/puppet/ssl/private_keys/${::fqdn}.pem  ${worker_key_file}",
       path => $::path,
-      creates => ["${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker-key.pem"],
+      creates => $worker_key_file,
       require => File["${rootpath}/etc/kubernetes/ssl"]
+    } ->
+    file { $worker_key_file:
+      owner => 0,    # root
+      group => 500,  # core
+      mode => "0640"
     }
     exec { "copy agent certificate and CA certificate for worker Kubelet":
-      command => "cat /etc/puppet/ssl/certs/${::fqdn}.pem /etc/puppet/ssl/certs/ca.pem > ${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker.pem",
+      command => "cat /etc/puppet/ssl/certs/${::fqdn}.pem /etc/puppet/ssl/certs/ca.pem > $worker_cert_file",
       path => $::path,
-      creates => ["${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker.pem"],
+      creates => $worker_cert_file,
       require => File["${rootpath}/etc/kubernetes/ssl"]
+    } ->
+    file { $worker_cert_file:
+      owner => 0,  # root
+      group => 0,  # root
+      mode => "0644"
     }
   }
 }

@@ -1,0 +1,15 @@
+# Source /etc/environment in its own format (which is key=value, *not* Bourne shell)
+# Export a select list of variables for interactively run commands
+#
+# This script is maintained by Puppet; do not edit
+eval "$(IFS='='
+      while read env val; do
+            if [ -n "$env" ]; then
+               printf "%s=%q\n" "$env" "$val"
+            fi
+      done < /etc/environment )"
+
+<%# This is a concat fragment; it comes first, and then individual Puppet classes
+    can add their own export statements at the end by calling
+    epflsti_coreos::private::environment::export_to_interactive_shell
+    %>

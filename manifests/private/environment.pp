@@ -38,4 +38,26 @@ class epflsti_coreos::private::environment(
       order => '10',
       content => template("epflsti_coreos/environment.erb")
     }
+
+    file { ["${rootpath}/etc/bash", "${rootpath}/etc/bash/bashrc.d/"]:
+      ensure => "directory"
+    }
+
+    concat { "/etc/bash/bashrc.d/source-etc-environment":
+      path => "${rootpath}/etc/bash/bashrc.d/source-etc-environment",
+      ensure => "present"
+    }
+    concat::fragment { "Header of /etc/bash/bashrc.d/source-etc-environment":
+      target => "/etc/bash/bashrc.d/source-etc-environment",
+      order => '0',
+      content => template("epflsti_coreos/source-etc-environment.bash.erb")
+    }
+
+    define export_in_interactive_shell() {
+      concat::fragment { "Export ${name} to interactive shell":
+        target => "/etc/bash/bashrc.d/source-etc-environment",
+        order => '50',
+        content => "export ${name}\n"
+      }
+    }
 }

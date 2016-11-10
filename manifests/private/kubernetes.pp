@@ -28,17 +28,16 @@ class epflsti_coreos::private::kubernetes(
   $master_count = size($kubernetes_masters)
   $kube_quay_version = "v${k8s_version}_coreos.0"
   $api_server_urls = inline_template('<%= @kubernetes_masters.map { |host| "https://#{host}/" }.join "," %>')
+  $kubeconfig_path = "/etc/kubernetes/kubeconfig.yaml"
   # Quite unfortunately needed, pending resolution of https://github.com/kubernetes/kubernetes/issues/18174:
   $first_apiserver = inline_template('<%= @kubernetes_masters[0] %>')
 
-  concat::fragment { "K8S_VERSION and KUBELET_VERSION in /etc/environment":
+  concat::fragment { "Kubernetes stuff for /etc/environment (all nodes)":
       target => "/etc/environment",
       order => '20',
-      content => inline_template("K8S_VERSION=${k8s_version}\nKUBELET_VERSION=${kube_quay_version}\n")
-  }
-
-  class { "epflsti_coreos::private::kubernetes::keys":
-    is_master => $is_master
+      content => inline_template("K8S_VERSION=<%= @k8s_version %>
+KUBELET_VERSION=<%= kube_quay_version %>
+")
   }
 
   systemd::unit { "kubernetes.service":
@@ -126,7 +125,7 @@ spec:
 <%- if @is_master -%>
     - --master=http://127.0.0.1:8080
 <%- else -%>
-    - --kubeconfig=/etc/kubernetes/worker-kubeconfig.yaml
+    - --kubeconfig=<%= @kubeconfig_path %>
 <%- end -%>
     - --proxy-mode=iptables
     securityContext:
@@ -136,7 +135,7 @@ spec:
       name: ssl-certs
       readOnly: true
 <%- if ! @is_master -%>
-    - mountPath: /etc/kubernetes/worker-kubeconfig.yaml
+    - mountPath: <%= @kubeconfig_path %>
       name: kubeconfig
       readOnly: true
     - mountPath: /etc/kubernetes/ssl
@@ -150,7 +149,7 @@ spec:
 <%- if ! @is_master -%>
   - name: kubeconfig
     hostPath:
-      path: /etc/kubernetes/worker-kubeconfig.yaml
+      path: <%= @kubeconfig_path %>
   - name: etc-kube-ssl
     hostPath:
       path: /etc/kubernetes/ssl
@@ -158,30 +157,23 @@ spec:
 ")
   }  # kubelet_service "kube-proxy"
 
+  # Remote access to API servers
+  class { "epflsti_coreos::private::kubernetes::keys":
+    is_master => $is_master
+  }
   if (! $is_master) {
-    file { "${rootpath}/etc/kubernetes/worker-kubeconfig.yaml":
-      content => "apiVersion: v1
-kind: Config
-clusters:
-- name: local
-  cluster:
-    certificate-authority: /etc/kubernetes/ssl/ca.pem
-    server: https://${first_apiserver}
-users:
-- name: kubelet
-  user:
-    client-certificate: /etc/kubernetes/ssl/${::fqdn}-worker.pem
-    client-key: /etc/kubernetes/ssl/${::fqdn}-worker-key.pem
-contexts:
-- context:
-    cluster: local
-    user: kubelet
-  name: kubelet-context
-current-context: kubelet-context
-"
-    }  # /etc/kubernetes/worker-kubeconfig.yaml
-  }  # ! is_master
-  
+    file { "${rootpath}/${kubeconfig_path}":
+      content => template("epflsti_coreos/kubeconfig.yaml.erb")
+    }
+    concat::fragment { "Kubernetes environment for worker nodes":
+      target => "/etc/environment",
+      order => '20',
+      content => "KUBECONFIG=${kubeconfig_path}\n"
+    }
+    epflsti_coreos::private::environment::export_in_interactive_shell{ "KUBECONFIG": }
+  }
+
+  # Run kube-scheduler in high availability
   kubelet_service { "kube-scheduler":
       enable => $is_master,
       content => "apiVersion: v1
