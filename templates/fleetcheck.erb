@@ -2,7 +2,7 @@
 
 fleetcheck() {
   fleetctl list-machines | sort -n -t . -k 7,7
-  TOTAL=\$(fleetctl list-machines -no-legend | wc -l)
+  TOTAL=$(fleetctl list-machines -no-legend | wc -l)
   echo -e "\n         Congratulations officer, your fleet have $TOTAL members !\n"
   echo -e "* etcd members are:\n"
   etcdctl member list | sort -t = -k2
