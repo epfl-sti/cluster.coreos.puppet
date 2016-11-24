@@ -33,8 +33,11 @@ class epflsti_coreos() {
     # Add classes here that you don't care to test as part of
     # the bootstrap cycle.
     class { "epflsti_coreos::private::ssh":  }
-    class { "epflsti_coreos::private::deis": }
+    # class { "epflsti_coreos::private::deis": }
     class { "epflsti_coreos::private::environment": }
+    if ($::hostname == "c69" or $::hostname == "c04") {
+      class { "epflsti_coreos::private::zfs": }
+    }
     class { "epflsti_coreos::private::docker": }
     class { "epflsti_coreos::private::etcd2":  }
     class { "epflsti_coreos::private::calico":  }
