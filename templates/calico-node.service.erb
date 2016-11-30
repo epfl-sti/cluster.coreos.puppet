@@ -6,7 +6,7 @@ Requires=docker.service etcd2.service
 
 [Service]
 ExecStartPre=-/usr/bin/docker rm -f calico-node
-ExecStart=/opt/bin/calicoctl node --detach=false --ip6=<%= @ipaddress6 %>
+ExecStart=/opt/bin/calicoctl node run --init-system --ip6=<%= @ipaddress6 %>
 ExecStop=-/usr/bin/docker stop calico-node
 
 [Install]
