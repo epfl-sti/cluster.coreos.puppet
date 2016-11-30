@@ -27,7 +27,7 @@ class epflsti_coreos::private::calico (
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
   if versioncmp($::calicoctl_version, "0.99999999999") < 0 {
     exec { "Remove obsolete version of calicoctl":
-      command => "rm $calicoctl_bin",
+      command => "rm -f $calicoctl_bin || true",
       path => $::path
     } -> Exec["curl calicoctl"]
   }
