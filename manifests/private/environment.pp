@@ -60,4 +60,22 @@ class epflsti_coreos::private::environment(
         content => "export ${name}\n"
       }
     }
+
+    # Vanilla CoreOS 1185.3.0 has code in /etc/bash/bashrc to load all files
+    # from /etc/bash/bashrc.d, but such code is not in 1068.10.0:
+    if (! str2bool("$has_bashrc_d")) {
+      $bashrc = "${rootpath}/etc/bash/bashrc"
+      exec { "un-symlink ${bashrc}":
+        command => "rm -f ${bashrc}; cp ${rootpath}/usr/share/bash/bashrc ${bashrc}",
+        unless => "test -f ${bashrc} && ! test -h ${bashrc}",
+        path => $::path
+      } ->
+      file_line { "source everything from /etc/bash/bashrc.d":
+        path   => "${rootpath}/etc/bash/bashrc",
+        ensure => 'present',
+        # Present in vanilla CoreOS 1185.3.0, not in 1068.10.0:
+          match  => "^for sh in /etc/bash/bashrc.d",
+          line   => 'for sh in /etc/bash/bashrc.d/*; do [[ -r ${sh} ]] && source "${sh}"; done',
+      }
+    }
 }
