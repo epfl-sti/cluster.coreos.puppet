@@ -14,6 +14,7 @@ inherits epflsti_coreos::private::params {
     group => 500,
     content => "TOOLBOX_DOCKER_IMAGE=${::toolbox_docker_image}
 TOOLBOX_DOCKER_TAG=${::toolbox_docker_tag}
+TOOLBOX_BIND=\"--bind=/:/media/root --bind=/usr:/media/root/usr --bind=/run:/media/root/run --bind=/home/core:/home/core\"
 "
   }
 
