@@ -1,9 +1,9 @@
-# Configure Calico as per https://github.com/projectcalico/calico-containers/blob/master/docs/calico-with-docker/docker-network-plugin/ManualSetup.md
+# Configure Calico networking for Kubernetes
 #
 # === Parameters:
 #
 # [*calicoctl_url*]
-#    Where to download the calicoctl script from
+#    Where to download the calicoctl binary from
 #
 # [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
@@ -25,7 +25,9 @@ class epflsti_coreos::private::calico (
   include ::epflsti_coreos::private::systemd
 
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
-  if versioncmp($::calicoctl_version, "0.99999999999") < 0 {
+  $calicoctl_is_obsolete = (
+    (versioncmp($::calicoctl_version, "0.99999999999") < 0))
+  if $calicoctl_is_obsolete {
     exec { "Remove obsolete version of calicoctl":
       command => "rm -f $calicoctl_bin || true",
       path => $::path
