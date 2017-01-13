@@ -49,4 +49,12 @@ class epflsti_coreos::private::fleet(
       command => "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart fleet.service",
       refreshonly => true
     }
+
+    file { "$rootpath/home/core/.fleetctl":
+      ensure => "directory"
+    } ->
+    file { "$rootpath/home/core/.fleetctl/known_hosts":
+      ensure => "link",
+      target => "/etc/ssh/ssh_known_hosts"
+    }
 }
