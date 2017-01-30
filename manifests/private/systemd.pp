@@ -122,7 +122,7 @@ class epflsti_coreos::private::systemd {
         exec { "Disabling systemd ${name}":
           command => "systemctl disable ${name}",
           path => $::path,
-          unless => "test $(/usr/bin/systemctl is-enabled ${name}) = 'disabled'"
+          onlyif => "test $(/usr/bin/systemctl is-enabled ${name}) |grep -q -E 'enabled|static'"
         }
       }
   
@@ -150,7 +150,7 @@ class epflsti_coreos::private::systemd {
           exec { "Stopping systemd ${name}":
             command => "systemctl stop ${name}",
             path => $::path,
-            unless => "test $(systemctl is-active ${name}) = 'inactive'"
+            onlyif => "test $(systemctl is-active ${name}) = 'active'"
           }
         }
       }  # if ($_kind == "service" or $_kind == "timer")
