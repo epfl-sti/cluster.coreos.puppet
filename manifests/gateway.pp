@@ -83,6 +83,12 @@
 # * (TODO) Set up as many ucarp instances as needed to handle
 #   internal and external VIPs
 # 
+# === Bootstrapping:
+#
+# This class does *NOT* try to turn an installing node into a gateway.
+# Most actions that take effect at run time, are thus guarded by
+# a test on ($::lifecycle_stage == "production")
+
 class epflsti_coreos::gateway(
   $rootpath = $::epflsti_coreos::private::params::rootpath,
   $external_interface = undef,
@@ -103,7 +109,10 @@ class epflsti_coreos::gateway(
   include ::epflsti_coreos::private::systemd
 
   exec { "restart networkd in host":
-    command => "/bin/true ; set -e -x; while ip route del default; do :; done; /usr/bin/systemctl restart systemd-networkd.service",
+    command => $::lifecycle_stage ? {
+      "production" => "/usr/bin/systemctl restart systemd-networkd.service",
+      default => "/bin/true ; echo No-op at bootstrap time"
+    },
     refreshonly => true,
     path => $::path
   }
@@ -142,39 +151,43 @@ class epflsti_coreos::gateway(
     } ~> Exec["restart networkd in host"]
   }
 
-  exec { inline_template("<%= @_enable_masquerade ? 'Enable': 'Disable' %> masquerading for egress traffic on <%= @external_interface %>"):
-    path => $::path,
-    command => inline_template("/sbin/iptables -t nat <%= @_enable_masquerade ? '-A' : '-D' %> POSTROUTING -o <%= @external_interface %> -j MASQUERADE"),
-    unless => inline_template("/bin/true ; <%= @_enable_masquerade ? '' : '!' %> iptables -t nat -L -v| grep -q 'MASQUERADE.*<%= @external_interface %>'")
-  }
+  ######## Bootstrap-time actions stop here #########
 
-  # haproxy for ingress traffic
-  private::systemd::unit { "${::cluster_owner}.haproxy.service":
-    # Uses $::public_web_domain
-    content => template('epflsti_coreos/haproxy.service.erb'),
-    start => ($::lifecycle_stage == "production") and $_enable_haproxy,
-    enable => $_enable_haproxy
-  }
+  if ($::lifecycle_stage == "production") {
+    exec { inline_template("<%= @_enable_masquerade ? 'Enable': 'Disable' %> masquerading for egress traffic on <%= @external_interface %>"):
+      path => $::path,
+      command => inline_template("/sbin/iptables -t nat <%= @_enable_masquerade ? '-A' : '-D' %> POSTROUTING -o <%= @external_interface %> -j MASQUERADE"),
+      unless => inline_template("/bin/true ; <%= @_enable_masquerade ? '' : '!' %> iptables -t nat -L -v| grep -q 'MASQUERADE.*<%= @external_interface %>'")
+    }
 
-  exec { "Ensure we have ${_expected_default_route} as the default route":
+    # haproxy for ingress traffic
+    private::systemd::unit { "${::cluster_owner}.haproxy.service":
+      # Uses $::public_web_domain
+      content => template('epflsti_coreos/haproxy.service.erb'),
+      start => $_enable_haproxy,
+      enable => $_enable_haproxy
+    }
+
+    exec { "Ensure we have ${_expected_default_route} as the default route":
       command => "true ; while route del default; do :; done",
       path => $path,
       unless => "/usr/bin/test \"$(/sbin/ip route | sed -n 's/default via \(\S*\) .*/\1/p')\" = \"${_expected_default_route}\"",
     } ~> Exec["restart networkd in host"]
 
-  # Set up / tear down Squid and transparent proxying
-  $_iptables_spec = "-p tcp -d '!'${::ipv4_network} --dport 80 -j REDIRECT --to 3129 -w"
-  private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
-    content => template('epflsti_coreos/squid-in-a-can.service.erb'),
-    start => ($::lifecycle_stage == "production"),
-    enable => $_enable_squid_and_transparent_proxying
-  }
-  exec { "Set up transparent forwarding":
-    path => $path,
-    command => "/bin/false",
-    unless => inline_template("/bin/true ;
+    # Set up / tear down Squid and transparent proxying
+    $_iptables_spec = "-p tcp -d '!'${::ipv4_network} --dport 80 -j REDIRECT --to 3129 -w"
+    private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
+      content => template('epflsti_coreos/squid-in-a-can.service.erb'),
+      start => $_enable_squid_and_transparent_proxying,
+      enable => $_enable_squid_and_transparent_proxying
+    }
+    exec { "Set up transparent forwarding":
+      path => $path,
+      command => "/bin/false",
+      unless => inline_template("/bin/true ;
 enabled=${_enable_squid_and_transparent_proxying}
 <%= scope.function_template([\"epflsti_coreos/setup_transparent_proxy.sh\"]) %>
 ")
-  }
+    }
+  }  # end if ($::lifecycle_stage == "production")
 }
