@@ -20,73 +20,85 @@
 #
 # === Parameters:
 #
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
+#
 # [*external_interface*]
 #   The name of the network interface connected to the Internet
 #   (required)  
 #
-# [*external_addresses*]
-#   Addresses on the external network, as a list of strings in CIDR
-#   "IPv4/netmask" format (IPv6 not supported yet). If empty, do not
-#   configure a gateway at all (keep the bonded pair set up by
-#   epflsti_coreos::private::network); this is useful to "clean up"
-#   a former gateway that has been physically plugged back the
-#   "normal" way
+# [*external_ipv4_address*]
+#   Fixed IPv4 address on the external network, as a list of strings
+#   in CIDR "IPv4/netmask" format. If undefined, do not configure a
+#   gateway at all (keep the bonded pair set up by
+#   epflsti_coreos::private::network); such a configuration is
+#   intended for "cleaning up" a former gateway that has been physically
+#   plugged back the "normal" way.
 #
 # [*external_ipv4_gateway*]
 #   IPv4 default route on the external network for the gateway nodes
 #   (mandatory)
 #
-# [*ipv4_outgoing_active*]
-#   True iff this is the *active* IPv4 gateway; that is, it has the
-#   IPv4 VIP aliased on ethbr4. Note that this is for egress
-#   (NATed) traffic only; with care, ingress traffic can be
-#   configured with an active-active setup (although this is not
-#   implemented yet)
+# [*external_ipv4_vips*]
+#   The list of external-facing Virtual IPs (VIPs) that the cluster
+#   manages at the gateway, in CIDR "IPv4/netmask" format.
+#   Recommendation is to allocate one fixed IP out of the pool to each
+#   physical node (and set $external_ipv4_address to that), and use
+#   the remaining allocated IPs (supposedly all in the same subnet) as
+#   the value of $external_ipv4_vips across all gateway nodes.
+
+# [*failover_shared_secret*]
+#   A password that serves for gateway nodes to authenticate each other
+#   (used as the --pass flag to ucarp)
 #
 # [*enable_boundary_caching*]
 #   If true, set up a transparent cache for egress HTTP traffic on port 80
 #
 # === Global Variables:
 #
-# [*$::gateway_vip*]
-#   The IP address that all internal nodes *and* the inactive
-#   gateway nodes have set up as their default route at provisioning
-#   time. The active gateway node (the one that has
-#   ${ipv4_outgoing_active} set to true) sets up this IP as an alias
-#   for itself, and enables routing and masquerading.
+# [*$::gateway_ipv4_vip*]
+#   The IPv4 address that all internal (non-gateway) nodes have set up
+#   as their default route at provisioning time. The active gateway
+#   node sets up this IP as an alias for itself, and enables routing
+#   and masquerading.
 #
 # [*$::cluster_owner*]
 #   The prefix to set as the name to the haproxy Docker job
 #
 # [*$::public_web_domain*]
-#   The domain in which all host names resolve to the public IP of
+#   A domain in which all host names resolve to the public IP of
 #   the cluster. Either set a wildcard CN in a domain you own, or
 #   use 93.184.216.34.xip.io
 #
 # === Actions:
 #
-# If $external_addresses is set and not empty, this class overrides
-# the network configuration set up by cloud-config.yml at provisioning
-# time thusly:
+# This class overrides the network configuration set up by
+# cloud-config.yml at provisioning time thusly:
 #
-# * Configure $external_interface with the $external_addresses
+# * Configure $external_interface with the $external_ipv4_address
+#
 # * Change the default route to point to $external_ipv4_gateway
 #
-# Additionnally, iff $ipv4_outgoing_active is not undef:
-#
-# * Alias the ethbr4 interface to $::gateway_vip
-# * Activate IPv4 masquerading through $external_interface
-# * Set up transparent proxying on port 80
-#
+# * (TODO) Set up as many ucarp instances as needed to handle
+#   internal and external VIPs
+# 
 class epflsti_coreos::gateway(
+  $rootpath = $::epflsti_coreos::private::params::rootpath,
   $external_interface = undef,
-  $external_addresses = [],
+  $external_ipv4_address = undef,
   $external_ipv4_gateway,
-  $ipv4_outgoing_active = undef,
+  $external_ipv4_vips,
+  $failover_shared_secret = undef,
   $enable_boundary_caching = true
-) {
+) inherits epflsti_coreos::private::params {
+  if ($external_ipv4_address) {
+    validate_string($external_ipv4_address)
+  }
   validate_string($external_interface)
   validate_string($external_ipv4_gateway)
+  validate_array($external_ipv4_vips)
+  validate_string($failover_shared_secret)
 
   include ::epflsti_coreos::private::systemd
 
@@ -96,75 +108,52 @@ class epflsti_coreos::gateway(
     path => $::path
   }
 
-  validate_array($external_addresses)
-
   # Feature selection
-  if (size($external_addresses) > 0) {
+  if ($external_ipv4_address) {
+    $enabled = true   # For networking.pp
     $_enable_haproxy = true
+    $_enable_masquerade = true
     $_enable_squid_and_transparent_proxying = $enable_boundary_caching
-    $_enable_gateway_routing = $ipv4_outgoing_active
     $_expected_default_route = $external_ipv4_gateway
   } else {
+    # Clean-up case (host is being discharged from acting as gateway)
+    $enabled = false
     $_enable_haproxy = false
+    $_enable_masquerade = false
     $_enable_squid_and_transparent_proxying = false
-    $_enable_gateway_routing = false
-    $_expected_default_route = $gateway_vip
+    $_expected_default_route = $gateway_ipv4_vip
   }
 
   # Set up external IPv4 addresses
-  # Template uses $external_interface, $external_addresses and
+  # Template uses $external_interface, $external_ipv4_address and
   # $external_ipv4_gateway
-  if (size($external_addresses) > 0) {
+  if ($external_ipv4_address) {
     file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
       ensure => "present",
       content => template("epflsti_coreos/networkd/50-epflnet.network.erb")
     } ~> Exec["restart networkd in host"]
   } else {
-    # Clean-up case (host is being discharged from acting as gateway)
     file { "/etc/systemd/network/50-${external_interface}-epflnet.network":
       ensure => "absent"
     } ~> Exec["restart networkd in host"]
     exec { "Flush addresses on ${external_interface}":
       command => "/sbin/ip addr flush dev ${external_interface}",
       onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q inet"
-    }
+    } ~> Exec["restart networkd in host"]
+  }
+
+  exec { inline_template("<%= @_enable_masquerade ? 'Enable': 'Disable' %> masquerading for egress traffic on <%= @external_interface %>"):
+    path => $::path,
+    command => inline_template("/sbin/iptables -t nat <%= @_enable_masquerade ? '-A' : '-D' %> POSTROUTING -o <%= @external_interface %> -j MASQUERADE"),
+    unless => inline_template("/bin/true ; <%= @_enable_masquerade ? '' : '!' %> iptables -t nat -L -v| grep -q 'MASQUERADE.*<%= @external_interface %>'")
   }
 
   # haproxy for ingress traffic
-  # TODO: This is incompatible with Squid for egress traffic ()
   private::systemd::unit { "${::cluster_owner}.haproxy.service":
     # Uses $::public_web_domain
     content => template('epflsti_coreos/haproxy.service.erb'),
-    start => ($::lifecycle_stage == "production"),
+    start => ($::lifecycle_stage == "production") and $_enable_haproxy,
     enable => $_enable_haproxy
-  }
-  
-  if ($_enable_gateway_routing) {
-    exec { "Enable gateway VIP":
-      path => $path,
-      command => "/sbin/ip addr add ${::gateway_vip}/24 dev ethbr4",
-      unless => "/sbin/ip addr show |grep -qw ${::gateway_vip}"
-    } 
-    exec { "Disable default route through ethbr4":
-      command => "/sbin/ip route del default dev ethbr4",
-      onlyif => "/sbin/ip route show dev ethbr4 | grep -q ^default"
-    }
-    exec { "Enable masquerading":
-      path => $path,
-      command => "/sbin/iptables -t nat -A POSTROUTING -o ${external_interface} -j MASQUERADE",
-      unless => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
-    }
-  } else {
-    exec { "Disable gateway VIP":
-      path => $path,
-      command => "/sbin/ip addr del ${::gateway_vip}/24 dev ethbr4",
-      onlyif => "/sbin/ip addr show | grep -qw ${::gateway_vip}"
-    } 
-    exec { "Disable masquerading":
-      path => $path,
-      command => "/sbin/iptables -t nat -D POSTROUTING -o ${external_interface} -j MASQUERADE",
-      onlyif => "/sbin/iptables -t nat -L -v| grep 'MASQUERADE.*${external_interface}'"
-    } 
   }
 
   exec { "Ensure we have ${_expected_default_route} as the default route":

@@ -35,6 +35,14 @@
 # [*$ipv6_physical_netmask*]
 #   The IPv6 netmask to use.
 #
+# === Global Variables:
+#
+# [*$::gateway_ipv4_vip*]  (through template)
+#   The IPv4 address that all internal (non-gateway) nodes have set up
+#   as their default route at provisioning time. The active gateway
+#   node sets up this IP as an alias for itself, and enables routing
+#   and masquerading.
+#
 # === Actions:
 #
 # * Set the FQDN in /etc/hostname, as is the CoreOS way
@@ -103,7 +111,7 @@ MACAddress=<%= @first_mac_address %>
 ")
   }
 
-  $uses_internal_gateway = ! $::epflsti_coreos::gateway::external_interface
+  $uses_internal_gateway = ! $::epflsti_coreos::gateway::enabled
   systemd::unit { "50-ethbr4-internal.network":
     content => template("epflsti_coreos/networkd/50-ethbr4-internal.network.erb")
   }

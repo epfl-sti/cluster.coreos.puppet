@@ -33,8 +33,8 @@ setup_chain() {
     fi
     (iptables-save -t nat | grep -vw COMMIT | \
      grep -ve "-A $custom_chain"
-<% @external_addresses.each do |external_address| -%>
-    echo "-A $custom_chain -d <%= external_address.split("/")[0] %> -j RETURN"
+<% if @external_ipv4_address -%>
+    echo "-A $custom_chain -d <%= @external_ipv4_address.split("/")[0] %> -j RETURN"
 <% end -%>
     echo "-A $custom_chain -d <%= ipv4_network %> -j RETURN"
     echo "-A $custom_chain -p tcp -j REDIRECT --to 3129"
