@@ -118,10 +118,12 @@ class epflsti_coreos::gateway(
   }
 
   # Feature selection
+  $_transparent_forwarding_port = 3129
   if ($external_ipv4_address) {
     $enabled = true   # For networking.pp
     $_enable_haproxy = true
     $_enable_masquerade = true
+    $_enable_transparent_forwarding = true
     $_enable_squid_and_transparent_proxying = $enable_boundary_caching
     $_expected_default_route = $external_ipv4_gateway
   } else {
@@ -129,6 +131,7 @@ class epflsti_coreos::gateway(
     $enabled = false
     $_enable_haproxy = false
     $_enable_masquerade = false
+    $_enable_transparent_forwarding = false
     $_enable_squid_and_transparent_proxying = false
     $_expected_default_route = $gateway_ipv4_vip
   }
@@ -149,6 +152,31 @@ class epflsti_coreos::gateway(
       command => "/sbin/ip addr flush dev ${external_interface}",
       onlyif => "/sbin/ip addr show dev ${external_interface} | grep -q inet"
     } ~> Exec["restart networkd in host"]
+  }
+
+  private::systemd::unit { "stiitops.cache.gateway.service":
+    content => inline_template("#
+# Managed by Puppet, DO NOT EDIT
+
+  [Unit]
+Description=The \"head\" Squid on a gateway node
+Requires=docker.service
+After=docker.service
+;; TODO: this should also mesh with the iptables-redirect.service somehow
+
+[Service]
+Restart=on-failure
+RestartSec=60s
+ExecStartPre=-/usr/bin/docker pull registry.service.consul:5000/cluster-proxy-squid-egress-gateway
+ExecStart=/usr/bin/docker run --rm --name=%p --net=host \
+              -e PUBLIC_WEB_DOMAIN=<%= @public_web_domain %> \
+              -e IPADDRESS=<%= @ipaddress %> \
+              -e SQUID_PORT=<%= @_transparent_forwarding_port %> \
+              registry.service.consul:5000/cluster-proxy-squid-egress-gateway
+ExecStop=-/usr/bin/docker rm -f %p
+    "),
+    enable => $enabled,
+    start => $enabled and ($::lifecycle_stage == "production")
   }
 
   ######## Bootstrap-time actions stop here #########
@@ -175,19 +203,15 @@ class epflsti_coreos::gateway(
     } ~> Exec["restart networkd in host"]
 
     # Set up / tear down Squid and transparent proxying
-    $_iptables_spec = "-p tcp -d '!'${::ipv4_network} --dport 80 -j REDIRECT --to 3129 -w"
-    private::systemd::unit { "${::cluster_owner}.squid-in-a-can.service":
-      content => template('epflsti_coreos/squid-in-a-can.service.erb'),
-      start => $_enable_squid_and_transparent_proxying,
-      enable => $_enable_squid_and_transparent_proxying
-    }
-    exec { "Set up transparent forwarding":
+    # I am told I should use a systemd.service instead of a quirky "exec".
+    $_iptables_spec = "-p tcp -d '!'${::ipv4_network} --dport 80 -j REDIRECT --to <%= @_transparent_forwarding_port %> -w"
+    exec { inline_template("<%= @_enable_transparent_forwarding ? 'Enable': 'Disable' %> transparent forwarding"):
       path => $path,
-      command => "/bin/false",
-      unless => inline_template("/bin/true ;
-enabled=${_enable_squid_and_transparent_proxying}
-<%= scope.function_template([\"epflsti_coreos/setup_transparent_proxy.sh\"]) %>
-")
+      command => inline_template("/sbin/iptables -t nat \
+  <%= @_enable_transparent_forwarding ?  '-I' : '-D' %> PREROUTING \
+  -p tcp --dport 80 -j DNAT \
+  --to <%= @ipaddress %>:<%= @_transparent_forwarding_port %> -w"),
+      unless => inline_template("/bin/true ; <%= @_enable_transparent_forwarding ? '' : '!' %> iptables -t nat -L -v| grep -q <%= @_transparent_forwarding_port %>")
     }
   }  # end if ($::lifecycle_stage == "production")
 }
