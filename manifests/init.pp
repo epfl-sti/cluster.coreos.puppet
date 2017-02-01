@@ -39,6 +39,7 @@ class epflsti_coreos() {
       class { "epflsti_coreos::private::zfs": }
     }
     class { "epflsti_coreos::private::docker": }
+    class { "epflsti_coreos::private::consul": }
     class { "epflsti_coreos::private::etcd2":  }
     class { "epflsti_coreos::private::calico":  }
     class { "epflsti_coreos::private::kubernetes": }
