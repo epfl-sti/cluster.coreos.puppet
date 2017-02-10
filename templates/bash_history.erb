@@ -1,4 +1,5 @@
 sudo systemctl daemon-reload
+docker exec -it stiitops.cache.gateway tail -f /var/log/squid/access.log
 <% if @lifecycle_stage == "production" -%>
 journalctl -xe
 journalctl -l
