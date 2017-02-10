@@ -1,0 +1,32 @@
+[Unit]
+Description=ucarp on external VIPv4 %i
+Requires=docker.service network.target
+After=docker.service network.target
+
+[Service]
+Restart=always
+RestartSec=60s
+TimeoutStartSec=120
+TimeoutStopSec=25
+
+# See https://github.com/nicolerenee/docker-ucarp/blob/master/start.sh
+# for how the environment variables ought to be set
+# UCARP_VHID and UCARP_VIRTUALADDRESS are defined as Environment= stanzas
+# in a supplemental, per-service systemd config file e.g.
+# /etc/systemd/system/<%= @cluster_owner %>.gateway-ucarp-external@MYVIP.service.d/ip-and-vhid.conf
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --name=%p-%i  \
+    --net=host  \
+    nicolerenee/ucarp \
+      /usr/sbin/ucarp \
+      --interface=<%= @external_interface %> \
+      --srcip=<%= @external_ipv4_address.split("/")[0] %> \
+      --vhid=${UCARP_VHID} \
+      --pass=${UCARP_PASS} \
+      --addr=${UCARP_VIRTUALADDRESS} \
+      --upscript=/bin/echo \
+      --downscript=/bin/echo \
+      --nomcast
+
+ExecStop=/usr/bin/docker stop %p-%i

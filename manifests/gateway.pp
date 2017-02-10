@@ -188,6 +188,15 @@ ExecStop=-/usr/bin/docker rm -f %p
       unless => inline_template("/bin/true ; <%= @_enable_masquerade ? '' : '!' %> iptables -t nat -L -v| grep -q 'MASQUERADE.*<%= @external_interface %>'")
     }
 
+    class { "epflsti_coreos::private::gateway::ucarp":
+      enable => !(! $external_ipv4_address),
+      external_interface => $external_interface,
+      external_ipv4_address => $external_ipv4_address,
+      external_ipv4_gateway => $external_ipv4_gateway,
+      external_ipv4_vips => $external_ipv4_vips,
+      failover_shared_secret => $failover_shared_secret
+    }
+
     # haproxy for ingress traffic
     private::systemd::unit { "${::cluster_owner}.haproxy.service":
       # Uses $::public_web_domain
