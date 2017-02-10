@@ -71,6 +71,10 @@ RestartSec=5s
 TimeoutStartSec=120
 TimeoutStopSec=25
 EnvironmentFile=/etc/environment
+<%# Ad-hoc health checks for registry service on port 5000: %>
+Environment=SERVICE_5000_CHECK_HTTP=/
+Environment=SERVICE_5000_CHECK_INTERVAL=20s
+Environment=SERVICE_5000_CHECK_TIMEOUT=60s
 ExecStart=/usr/bin/docker run --rm --name=%p --net=host \
    --volume=/var/run/docker.sock:/tmp/docker.sock       \
   gliderlabs/registrator:latest      \
