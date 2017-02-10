@@ -44,7 +44,13 @@ WantedBy=sockets.target
   } ->
   file { "/etc/systemd/system/docker.service.d/50-puppet.conf":
     ensure => "present",
-    content => template("epflsti_coreos/docker.conf.erb"),
+    content => "[Unit]
+Wants=etcd2.service
+After=etcd2.service
+
+[Service]
+Environment=\"DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --registry-mirror=http://registry.service.consul:5000 --ipv6 --cluster-store=etcd://127.0.0.1:2379\"
+",
     alias => "coreos-docker-private-registry-config"
   } ~>
   exec { "restart docker in host":

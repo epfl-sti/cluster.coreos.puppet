@@ -8,7 +8,7 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
-# [*docker_registry_address*]
+# [*docker_registry_prefix*]
 #   The address of the internal Docker registry service, in host:port format
 #
 # [*docker_puppet_image_name*]
@@ -33,7 +33,7 @@
 
 class epflsti_coreos::private::puppet(
   $rootpath                = $::epflsti_coreos::private::params::rootpath,
-  $docker_registry_address  = $::epflsti_coreos::private::params::docker_registry_address,
+  $docker_registry_prefix  = "epflsti",
   $docker_puppet_image_name = $::epflsti_coreos::private::params::docker_puppet_image_name
   ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
@@ -62,8 +62,10 @@ class epflsti_coreos::private::puppet(
   # Puppet agent's Docker container
   ###############################################################
 
+  $puppet_docker_tag = "${docker_registry_prefix}/${docker_puppet_image_name}:latest"
+
   # Poor man's crontab
-  exec { "pull latest ${docker_puppet_image_name} from ${docker_registry_address}":
+  exec { "pull ${puppet_docker_tag}":
     path => $::path,
     command => "false",
     unless => template('epflsti_coreos/docker_pull_puppet.sh'),
@@ -77,7 +79,6 @@ class epflsti_coreos::private::puppet(
   }
 
   if ($_puppet_docker_version) {
-    $puppet_docker_tag = "${docker_registry_address}/${docker_puppet_image_name}:latest"
     $extra_facts = {
       cluster_coreos_puppet_current => $_puppet_docker_version
     }
