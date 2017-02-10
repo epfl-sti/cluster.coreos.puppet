@@ -83,9 +83,6 @@ class epflsti_coreos::private::puppet(
       cluster_coreos_puppet_current => $_puppet_docker_version
     }
   } else {
-    # Internal registry unreachable or not installed - Use version from the Internets, so as
-    # not to fail the provisioning cycle if bootstrapping.
-    $puppet_docker_tag = "epflsti/cluster.coreos.puppet:latest"
     $extra_facts = {}
   }
   $facts = merge({
