@@ -1,4 +1,7 @@
 # This file is managed by Puppet. DO NOT EDIT
+[Unit]
+Requires=docker.service
+
 [Service]
 Environment="FLEET_PUBLIC_IP=<%= @ipaddress %>"
 <%
