@@ -66,6 +66,6 @@ class epflsti_coreos::private::ipmi() {
   exec { "Restart IPMI (doesn't respond to arpings anymore)":
     path => $::path,
     command => "ipmitool bmc reset cold; /bin/false",
-    unless => "arping -c 3 -I ethbr4 -D ${::ipmi_ipaddress}"
+    onlyif => "arping -c 3 -I ethbr4 -D ${::ipmi_ipaddress}"
   }
 }
