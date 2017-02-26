@@ -63,9 +63,12 @@ class epflsti_coreos::private::ipmi() {
     unless => "ipmitool sel clear",
     require => Anchor["dev_ipmi0_available"]
   }
-  exec { "Restart IPMI (doesn't respond to arpings anymore)":
-    path => $::path,
-    command => "ipmitool bmc reset cold; /bin/false",
-    onlyif => "arping -c 3 -I ethbr4 -D ${::ipmi_ipaddress}"
+  $_ipmi_ping_status = inline_template("<%= `ping -c 3 ${::ipmi_ipaddress} >/dev/null 2>&1; echo -n $?` %>")
+  if ("0" != $_ipmi_ping_status) {
+    exec { "Restart IPMI (${::ipmi_ipaddress} doesn't respond to pings from puppetmaster)":
+      path => $::path,
+      # Fail on purpose, so as to cause a red condition in Foreman
+      command => "ipmitool bmc reset cold; /bin/false"
+    }
   }
 }
