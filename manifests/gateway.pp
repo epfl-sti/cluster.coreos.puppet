@@ -167,12 +167,12 @@ After=docker.service
 [Service]
 Restart=on-failure
 RestartSec=60s
-ExecStartPre=-/usr/bin/docker pull registry.service.consul:5000/cluster-proxy-squid-egress-gateway
+ExecStartPre=-/usr/bin/docker pull epflsti/cluster-proxy-squid-egress-gateway
 ExecStart=/usr/bin/docker run --rm --name=%p --net=host \
               -e PUBLIC_WEB_DOMAIN=<%= @public_web_domain %> \
               -e IPADDRESS=<%= @ipaddress %> \
               -e SQUID_PORT=<%= @_transparent_forwarding_port %> \
-              registry.service.consul:5000/cluster-proxy-squid-egress-gateway
+              epflsti/cluster-proxy-squid-egress-gateway
 ExecStop=-/usr/bin/docker rm -f %p
     "),
     enable => $enabled,
