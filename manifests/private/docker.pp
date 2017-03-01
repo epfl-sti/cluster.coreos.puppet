@@ -49,7 +49,7 @@ Wants=etcd2.service
 After=etcd2.service
 
 [Service]
-Environment=\"DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --registry-mirror=http://registry.service.consul:5000 --ipv6 --cluster-store=etcd://127.0.0.1:2379\"
+Environment=\"DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --registry-mirror=http://registry.service.consul:5000 --cluster-store=etcd://127.0.0.1:2379\"
 ",
     alias => "coreos-docker-private-registry-config"
   } ~>
