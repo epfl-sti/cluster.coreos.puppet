@@ -46,23 +46,13 @@ class epflsti_coreos::private::ipmi() {
     path => $::path,
     unless => "ipmitool user test ${rootUserNo} 16 ${::ipmi_root_password}",
     require => Anchor["dev_ipmi0_available"]
-  }
-
+  } ->
   exec { "Set up IPMI remote access":
     # Believe it or not, "ipmi=on" actually turns it off on both X7DBT and X8DDT! "ipmi=zoinx" works.
     command => "ipmitool lan set 1 auth ADMIN MD5 && ipmitool lan set 1 access on && ipmitool channel setaccess 1 ${rootUserNo} link=zoinx ipmi=zoinx callin=on privilege=4 && ipmitool user enable ${rootUserNo}",
     path => $::path,
-    unless => "ipmitool channel getaccess 1 ${rootUserNo}|grep -q 'IPMI Messaging.*enabled'",
-    require => Exec["Set up IPMI password"]
-  }
-  # When the System Event Log (SEL) is full, we get a boot-time message
-  # to the tune of: SEL full, press F1 to continue :-(
-  exec { "Empty IPMI bit bucket":
-    path => $::path,
-    command => "/bin/false",
-    unless => "ipmitool sel clear",
-    require => Anchor["dev_ipmi0_available"]
-  }
+    unless => "ipmitool channel getaccess 1 ${rootUserNo}|grep -q 'IPMI Messaging.*enabled'"
+  }  -> anchor { "ipmi_configured": }
 
   if ($::lifecycle_stage == "production") {
     # Poor man's monitoring of the availability of the IPMI interface
@@ -71,8 +61,18 @@ class epflsti_coreos::private::ipmi() {
       exec { "Restart IPMI (${::ipmi_ipaddress} doesn't respond to pings from puppetmaster)":
         path => $::path,
         # Fail on purpose, so as to cause a red condition in Foreman
-        command => "ipmitool bmc reset cold; /bin/false"
+        command => "ipmitool bmc reset cold; /bin/false",
+        require => Anchor["ipmi_configured"]
       }
     }
+  }
+
+  # When the System Event Log (SEL) is full, we get a boot-time message
+  # to the tune of: SEL full, press F1 to continue :-(
+  exec { "Empty IPMI bit bucket":
+    path => $::path,
+    command => "/bin/false",
+    unless => "ipmitool sel clear",
+    require => Anchor["dev_ipmi0_available"]
   }
 }
