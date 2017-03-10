@@ -57,6 +57,10 @@
 #
 # === Global Variables:
 #
+# [*$::ipv4_network*]
+#   The CIDR network/netmask for the internal addresses of nodes
+#   and masquerading.
+#
 # [*$::gateway_ipv4_vip*]
 #   The IPv4 address that all internal (non-gateway) nodes have set up
 #   as their default route at provisioning time. The active gateway
