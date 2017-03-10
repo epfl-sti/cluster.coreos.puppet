@@ -37,6 +37,7 @@ class epflsti_coreos() {
     if ($::hostname == "c69" or $::hostname == "c04") {
       class { "epflsti_coreos::private::zfs": }
     }
+    class { "epflsti_coreos::private::ceph": }
     class { "epflsti_coreos::private::docker": }
     class { "epflsti_coreos::private::consul": }
     class { "epflsti_coreos::private::etcd2":  }

@@ -1,5 +1,5 @@
 sudo systemctl daemon-reload
-docker exec -it stiitops.cache.gateway tail -f /var/log/squid/access.log
+docker exec -it <%= @cluster_owner %>.cache.gateway tail -f /var/log/squid/access.log
 <% if @lifecycle_stage == "production" -%>
 journalctl -xe
 journalctl -l
@@ -9,6 +9,7 @@ docker exec -it puppet.service puppet agent -t
 sudo docker rm -f puppet.service
 etcdctl cluster-health
 etcdctl member list
+docker exec -it <%= @cluster_owner %>.ceph_mon.service ceph health detail
 fleetctl list-machines
 fleetctl list-units
 fleetctl list-unit-files
