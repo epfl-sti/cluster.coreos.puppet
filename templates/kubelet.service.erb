@@ -17,12 +17,14 @@ Environment="RKT_OPTS=--volume var-log,kind=host,source=/var/log <% -%>
   --mount volume=dns,target=/etc/resolv.conf <% -%>
   --volume cni-bin,kind=host,source=/opt/cni/bin <% -%>
   --mount volume=cni-bin,target=/opt/cni/bin <% -%>
-<% if @is_master -%>
+  --volume dns,kind=host,source=/etc/resolv.conf <% -%>
+  --mount volume=dns,target=/etc/resolv.conf <% -%>
+<%- if @is_master -%>
   --volume modprobe,kind=host,source=/usr/sbin/modprobe <% -%>
   --mount volume=modprobe,target=/usr/sbin/modprobe <% -%>
   --volume lib-modules,kind=host,source=/lib/modules <% -%>
-  --mount volume=lib-modules,target=/lib/modules"
-<% end %>
+  --mount volume=lib-modules,target=/lib/modules <% -%>
+<%- end -%> "
 
 ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper <% -%>
   <%# --api-servers is required, despite the info being duplicated from --kubeconfig.

@@ -21,6 +21,7 @@
 class epflsti_coreos::private::calico (
   $calicoctl_url = "http://www.projectcalico.org/builds/calicoctl",
   $rootpath = $epflsti_coreos::private::params::rootpath,
+  $cni_version = "v1.6.1"
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
@@ -54,4 +55,31 @@ class epflsti_coreos::private::calico (
     enable => true,
     content => template('epflsti_coreos/calico-libnetwork.service.erb'),
   }
+
+  # Inspired from the "install-cni" part of
+  # https://coreos.com/kubernetes/docs/latest/deploy-master.html
+  $_install_cni_docker_image = "quay.io/calico/cni:${cni_version}"
+  systemd::unit { "calico-install-cni.service":
+    start => true,
+    enable => true,
+    content => inline_template("
+[Unit]
+Description=Download and install CNI tools for Calico to /opt/cni/bin
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/bin/docker pull ${_install_cni_docker_image}
+ExecStart=/usr/bin/docker run --rm --name %n <% -%>
+   --volume /opt/cni/bin:/host/opt/cni/bin <% -%>
+   --volume /etc/cni/net.d:/host/etc/cni/net.d <% -%>
+   -e ETCD_ENDPOINTS=http://<%= @ipaddress %>:2379 <% -%>
+   -e CNI_CONF_NAME=10-calico.conf <%# See kubernetes.pp -%>
+   -e SLEEP=false <% -%>
+   ${_install_cni_docker_image} /install-cni.sh
+
+")
+  }
+
 }
