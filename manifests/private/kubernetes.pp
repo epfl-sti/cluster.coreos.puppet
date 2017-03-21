@@ -26,7 +26,7 @@
 # stage (see ../init.pp for details on what that is).
 
 class epflsti_coreos::private::kubernetes(
-  $k8s_version = "1.4.5",
+  $k8s_version = "1.5.4",
   $kubernetes_masters = $::epflsti_coreos::private::params::kubernetes_masters,
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
@@ -203,19 +203,28 @@ spec:
     ensure => "directory"
   } ->
   file { "${rootpath}/etc/kubernetes/cni/net.d/10-calico.conf":
+    # The CoreOS doc seems wrong here. Based on
+    # http://docs.projectcalico.org/v2.0/getting-started/kubernetes/installation/integration
+    # instead
     content => "{
     \"name\": \"calico\",
-    \"type\": \"flannel\",
-    \"delegate\": {
-        \"type\": \"calico\",
-        \"etcd_endpoints\": \"localhost:2379\",
-        \"log_level\": \"none\",
-        \"log_level_stderr\": \"info\",
-        \"hostname\": \"${::ipaddress}\",
-        \"policy\": {
-            \"type\": \"k8s\",
-            \"k8s_api_root\": \"http://127.0.0.1:8080/api/v1/\"
-        }
+    \"type\": \"calico\",
+    \"etcd_endpoints\": \"http://localhost:2379\",
+    \"log_level\": \"none\",
+    \"log_level_stderr\": \"info\",
+    \"hostname\": \"${::hostname}\",
+    \"ipam\": {
+        \"type\": \"calico-ipam\"
+    },
+    \"network\": {
+        \"type\": \"calico\"
+    },
+    \"policy\": {
+      \"type\": \"k8s\",
+      \"k8s_api_root\": \"http://127.0.0.1:8080/api/v1/\"
+    },
+    \"kubernetes\": {
+        \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
     }
 }"
   }
