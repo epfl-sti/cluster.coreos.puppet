@@ -22,7 +22,7 @@
 # === Bootstrapping:
 #
 # This class does *not* configure or start the Kubelet. This is done in ancillary
-# class epflsti_coreos::private::kubernetes::kubelet_service, at "production-ready"
+# class epflsti_coreos::private::kubernetes::kubelet_manifest, at "production-ready"
 # stage (see ../init.pp for details on what that is).
 
 class epflsti_coreos::private::kubernetes(
@@ -53,7 +53,7 @@ KUBELET_VERSION=<%= kube_quay_version %>
     unless => "grep v${k8s_version} ${_kubectl_path}",
   }
 
-  kubelet_service { "kube-apiserver":
+  kubelet_manifest { "kube-apiserver":
       enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
@@ -103,9 +103,9 @@ spec:
       path: /usr/share/ca-certificates
     name: ssl-certs-host
 "
-  }  # kubelet_service "kube-apiserver"
+  }  # kubelet_manifest "kube-apiserver"
 
-  kubelet_service { "kube-proxy":
+  kubelet_manifest { "kube-proxy":
       enable => true,  # "The Kubernetes network proxy runs on each node"
                        # (http://kubernetes.io/docs/admin/kube-proxy/)
       content => inline_template("apiVersion: v1
@@ -154,7 +154,7 @@ spec:
       path: /etc/kubernetes/ssl
 <%- end -%>
 ")
-  } ~>  # kubelet_service "kube-proxy"
+  } ~>  # kubelet_manifest "kube-proxy"
   exec { "reload kubelet after updating kube-proxy":
     command => "systemctl restart kubelet",
     path => $::path,
@@ -178,7 +178,7 @@ spec:
   }
 
   # Run kube-scheduler in high availability
-  kubelet_service { "kube-scheduler":
+  kubelet_manifest { "kube-scheduler":
       enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
@@ -234,7 +234,7 @@ spec:
 }"
   }
 
-  kubelet_service { "kube-controller-manager":
+  kubelet_manifest { "kube-controller-manager":
     enable => $is_master,
     content => "
 apiVersion: v1
@@ -282,7 +282,7 @@ spec:
   }
 
 
-  define kubelet_service (
+  define kubelet_manifest (
     $enable = true,
     $content = undef,
     $rootpath = $::epflsti_coreos::private::params::rootpath
