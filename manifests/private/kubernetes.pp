@@ -30,6 +30,7 @@ class epflsti_coreos::private::kubernetes(
   $kubernetes_masters = $::epflsti_coreos::private::params::kubernetes_masters,
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
+  include ::epflsti_coreos::private::systemd
   $is_master = !empty(intersection([$::fqdn], $kubernetes_masters))
   $master_count = size($kubernetes_masters)
   $kube_quay_version = "v${k8s_version}_coreos.0"
@@ -51,6 +52,12 @@ KUBELET_VERSION=<%= kube_quay_version %>
     path => $::path,
     command => "wget -O ${_kubectl_path} http://storage.googleapis.com/kubernetes-release/release/v${k8s_version}/bin/linux/amd64/kubectl && chmod 755 ${_kubectl_path}",
     unless => "grep v${k8s_version} ${_kubectl_path}",
+  }
+
+  systemd::unit { "kubelet.service":
+    content => template("epflsti_coreos/kubelet.service.erb"),
+    enable => true
+    # Not started yet; see kubernetes/start_kubelet.pp
   }
 
   kubelet_manifest { "kube-apiserver":
