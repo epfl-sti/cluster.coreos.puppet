@@ -204,35 +204,6 @@ spec:
       timeoutSeconds: 1
 "
   }
-  file { ["${rootpath}/etc/kubernetes/cni", "${rootpath}/etc/kubernetes/cni/net.d"] :
-    ensure => "directory"
-  } ->
-  file { "${rootpath}/etc/kubernetes/cni/net.d/10-calico.conf":
-    # The CoreOS doc seems wrong here. Based on
-    # http://docs.projectcalico.org/v2.0/getting-started/kubernetes/installation/integration
-    # instead
-    content => "{
-    \"name\": \"calico\",
-    \"type\": \"calico\",
-    \"etcd_endpoints\": \"http://localhost:2379\",
-    \"log_level\": \"none\",
-    \"log_level_stderr\": \"info\",
-    \"hostname\": \"${::hostname}\",
-    \"ipam\": {
-        \"type\": \"calico-ipam\"
-    },
-    \"network\": {
-        \"type\": \"calico\"
-    },
-    \"policy\": {
-      \"type\": \"k8s\",
-      \"k8s_api_root\": \"http://127.0.0.1:8080/api/v1/\"
-    },
-    \"kubernetes\": {
-        \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
-    }
-}"
-  }
 
   kubelet_manifest { "kube-controller-manager":
     enable => $is_master,
@@ -281,6 +252,32 @@ spec:
 "
   }
 
+  file { ["${rootpath}/etc/kubernetes/cni", "${rootpath}/etc/kubernetes/cni/net.d"] :
+    ensure => "directory"
+  } ->
+  file { "${rootpath}/etc/kubernetes/cni/net.d/10-calico.conf":
+    content => "{
+    \"name\": \"calico\",
+    \"type\": \"calico\",
+    \"etcd_endpoints\": \"http://localhost:2379\",
+    \"log_level\": \"none\",
+    \"log_level_stderr\": \"info\",
+    \"hostname\": \"${::hostname}\",
+    \"ipam\": {
+        \"type\": \"calico-ipam\"
+    },
+    \"network\": {
+        \"type\": \"calico\"
+    },
+    \"policy\": {
+      \"type\": \"k8s\",
+      \"k8s_api_root\": \"http://127.0.0.1:8080/api/v1/\"
+    },
+    \"kubernetes\": {
+        \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
+    }
+}"
+  }
 
   define kubelet_manifest (
     $enable = true,
