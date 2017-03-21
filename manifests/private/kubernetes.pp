@@ -154,7 +154,12 @@ spec:
       path: /etc/kubernetes/ssl
 <%- end -%>
 ")
-  }  # kubelet_service "kube-proxy"
+  } ~>  # kubelet_service "kube-proxy"
+  exec { "reload kubelet after updating kube-proxy":
+    command => "systemctl restart kubelet",
+    path => $::path,
+    refreshonly => true
+  }
 
   # Remote access to API servers
   class { "epflsti_coreos::private::kubernetes::keys":
