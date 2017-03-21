@@ -4,28 +4,24 @@
 
 [Unit]
 Description=Kubelet in a box (Docker)
-After=docker.service calico-node.service calico-libnetwork.service
-Requires=docker.service calico-node.service calico-libnetwork.service
+After=docker.service calico-node.service calico-libnetwork.service calico-install-cni.service
+Requires=docker.service calico-node.service calico-libnetwork.service calico-install-cni.service
 
 [Service]
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
 ExecStartPre=/usr/bin/mkdir -p /var/log/containers
-
 EnvironmentFile=/etc/environment
-<% if @is_master %>
-Environment="RKT_OPTS=--volume modprobe,kind=host,source=/usr/sbin/modprobe <% -%>
-  --mount volume=modprobe,target=/usr/sbin/modprobe <% -%>
-  --volume lib-modules,kind=host,source=/lib/modules <% -%>
-  --mount volume=lib-modules,target=/lib/modules <% -%>
-  --volume var-log,kind=host,source=/var/log <% -%>
-  --mount volume=var-log,target=/var/log <% -%>
-  --volume dns,kind=host,source=/etc/resolv.conf <% -%>
-  --mount volume=dns,target=/etc/resolv.conf"
-<% else %>
 Environment="RKT_OPTS=--volume var-log,kind=host,source=/var/log <% -%>
   --mount volume=var-log,target=/var/log <% -%>
   --volume dns,kind=host,source=/etc/resolv.conf <% -%>
-  --mount volume=dns,target=/etc/resolv.conf"
+  --mount volume=dns,target=/etc/resolv.conf <% -%>
+  --volume cni-bin,kind=host,source=/opt/cni/bin <% -%>
+  --mount volume=cni-bin,target=/opt/cni/bin <% -%>
+<% if @is_master -%>
+  --volume modprobe,kind=host,source=/usr/sbin/modprobe <% -%>
+  --mount volume=modprobe,target=/usr/sbin/modprobe <% -%>
+  --volume lib-modules,kind=host,source=/lib/modules <% -%>
+  --mount volume=lib-modules,target=/lib/modules"
 <% end %>
 
 ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper <% -%>
