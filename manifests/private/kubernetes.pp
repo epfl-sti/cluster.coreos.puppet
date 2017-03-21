@@ -263,27 +263,29 @@ spec:
     ensure => "directory"
   } ->
   file { "${rootpath}/etc/kubernetes/cni/net.d/10-calico.conf":
-    content => "{
-    \"name\": \"calico\",
-    \"type\": \"calico\",
-    \"etcd_endpoints\": \"http://localhost:2379\",
-    \"log_level\": \"none\",
-    \"log_level_stderr\": \"info\",
-    \"hostname\": \"${::hostname}\",
-    \"ipam\": {
-        \"type\": \"calico-ipam\"
+    content => inline_template('{
+    "name": "calico",
+    "type": "calico",
+    "etcd_endpoints": "http://localhost:2379",
+    "log_level": "none",
+    "log_level_stderr": "info",
+    "hostname": "<%= @hostname %>",
+    "ipam": {
+        "type": "calico-ipam",
+        "assign_ipv4": "false",
+        "assign_ipv6": "true"
     },
-    \"network\": {
-        \"type\": \"calico\"
+    "network": {
+        "type": "calico"
     },
-    \"policy\": {
-      \"type\": \"k8s\",
-        \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
+    "policy": {
+      "type": "k8s",
+        "kubeconfig": "/etc/kubernetes/kubeconfig.yaml"
     },
-    \"kubernetes\": {
-        \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
+    "kubernetes": {
+        "kubeconfig": "/etc/kubernetes/kubeconfig.yaml"
     }
-}"
+}')
   }
 
   define kubelet_manifest (
