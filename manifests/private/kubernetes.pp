@@ -278,7 +278,7 @@ spec:
     },
     \"policy\": {
       \"type\": \"k8s\",
-      \"k8s_api_root\": \"http://127.0.0.1:8080/api/v1/\"
+        \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
     },
     \"kubernetes\": {
         \"kubeconfig\": \"/etc/kubernetes/kubeconfig.yaml\"
