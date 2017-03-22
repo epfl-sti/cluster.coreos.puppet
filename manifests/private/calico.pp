@@ -59,27 +59,15 @@ class epflsti_coreos::private::calico (
   # Inspired from the "install-cni" part of
   # https://coreos.com/kubernetes/docs/latest/deploy-master.html
   $_install_cni_docker_image = "quay.io/calico/cni:${cni_version}"
-  systemd::unit { "calico-install-cni.service":
-    enable => true,
-    start => "oneshot",
-    content => inline_template("
-[Unit]
-Description=Download and install CNI tools for Calico to /opt/cni/bin
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=oneshot
-ExecStartPre=-/usr/bin/docker pull ${_install_cni_docker_image}
-ExecStart=/usr/bin/docker run --rm --name %n <% -%>
-   --volume /opt/cni/bin:/host/opt/cni/bin <% -%>
-   --volume /etc/cni/net.d:/host/etc/cni/net.d <% -%>
-   -e ETCD_ENDPOINTS=http://<%= @ipaddress %>:2379 <% -%>
-   -e CNI_CONF_NAME=10-calico.conf <%# See kubernetes.pp -%>
-   -e SLEEP=false <% -%>
-   ${_install_cni_docker_image} /install-cni.sh
-
-")
+  exec { "install Calico CNI to /opt/cni/bin":
+    path => "${::path}:${rootpath}/bin",
+    unless => "test -f ${rootpath}/opt/cni/bin/calico",
+    command => inline_template('true ; set -e -x
+docker pull <%= @_install_cni_docker_image %>
+docker run --rm --name calico-install-cni \
+   --volume /opt/cni/bin:/host/opt/cni/bin \
+   --volume /etc/cni/net.d:/host/etc/cni/net.d \
+   -e SLEEP=false \
+   <%= @_install_cni_docker_image %> /install-cni.sh')
   }
-
 }

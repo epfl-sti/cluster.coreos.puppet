@@ -4,8 +4,9 @@
 
 [Unit]
 Description=Kubelet in a box (Docker)
-After=docker.service calico-node.service calico-libnetwork.service calico-install-cni.service
-Requires=docker.service calico-node.service calico-libnetwork.service calico-install-cni.service
+After=docker.service calico-node.service calico-libnetwork.service
+Requires=docker.service calico-node.service calico-libnetwork.service
+ConditionDirectoryNotEmpty=/opt/cni/bin
 
 [Service]
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
