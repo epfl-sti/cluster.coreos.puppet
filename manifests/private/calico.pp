@@ -60,8 +60,8 @@ class epflsti_coreos::private::calico (
   # https://coreos.com/kubernetes/docs/latest/deploy-master.html
   $_install_cni_docker_image = "quay.io/calico/cni:${cni_version}"
   systemd::unit { "calico-install-cni.service":
-    start => true,
     enable => true,
+    start => "oneshot",
     content => inline_template("
 [Unit]
 Description=Download and install CNI tools for Calico to /opt/cni/bin

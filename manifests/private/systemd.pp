@@ -18,7 +18,7 @@ class epflsti_coreos::private::systemd {
   #    as a string
   #
   # [*start*]
-  #    Only useful for services. Either true, false, or undef
+  #    Only useful for services. Either true, false, "oneshot" or undef
   #    (meaning started / stopped status is not managed).
   #
   # [*enable*]
@@ -130,7 +130,14 @@ class epflsti_coreos::private::systemd {
         if ($start == undef) {
           Anchor["systemd::unit_${name}::reloaded"] ~>
           exec { "Reloading systemd ${name}":
-            command => "systemctl reload-or-try-restart ${name}",
+            command => "systemctl try-reload-or-restart ${name}",
+            path => $::path,
+            refreshonly => true
+          }
+        } elsif ($start == "oneshot") {
+          Anchor["systemd::unit_${name}::reloaded"] ~>
+          exec { "Reloading systemd one-shot ${name}":
+            command => "systemctl start ${name}",
             path => $::path,
             refreshonly => true
           }
