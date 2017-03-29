@@ -51,8 +51,8 @@ class epflsti_coreos::private::gateway::ucarp(
   $external_ipv4_address,
   $external_ipv4_gateway,
   $external_ipv4_vips,
-  $failover_shared_secret
-) inherits epflsti_coreos::private::params {
+  $failover_shared_secret = $::ucarp_failover_shared_secret
+  ) inherits epflsti_coreos::private::params {
   file { "${rootpath}/etc/systemd/system/${::cluster_owner}.gateway-ucarp-external@.service":
     ensure => $enable ? { true => "file", default => "absent" },
     content => template('epflsti_coreos/external_vipv4@.service.erb')
@@ -71,8 +71,6 @@ Environment=\"UCARP_PASS=<%= @failover_shared_secret %>\"
     owner => "root",
     group => "root"
   } ~>
-  Exec["systemctl daemon-reload for ucarp configs"]
-
   exec { "systemctl daemon-reload for ucarp configs":
     path => $::path,
     command => "systemctl daemon-reload",
@@ -93,7 +91,7 @@ Environment=UCARP_VIRTUALADDRESS=<%= @_vip %>
 Environment=UCARP_VHID=<%= @_vhid %>
 ")
     } ~>
-    Exec["systemctl daemon-reload for ucarp configs"] ->
+    Exec["systemctl daemon-reload for ucarp configs"] ~>
     ::epflsti_coreos::private::systemd::unit { "${_service}":
       start => $::epflsti_coreos::private::gateway::ucarp::enable,
       enable => $::epflsti_coreos::private::gateway::ucarp::enable

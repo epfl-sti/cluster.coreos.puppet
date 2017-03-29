@@ -17,7 +17,7 @@ TimeoutStopSec=25
 ExecStart=/usr/bin/docker run \
     --rm \
     --name=%p-%i  \
-    --net=host  \
+    --net=host --privileged \
     nicolerenee/ucarp \
       /usr/sbin/ucarp \
       --interface=<%= @external_interface %> \
@@ -25,8 +25,8 @@ ExecStart=/usr/bin/docker run \
       --vhid=${UCARP_VHID} \
       --pass=${UCARP_PASS} \
       --addr=${UCARP_VIRTUALADDRESS} \
-      --upscript=/bin/echo \
-      --downscript=/bin/echo \
+      --upscript=/etc/ucarp/vip-up-default.sh \
+      --downscript=/etc/ucarp/vip-down-default.sh \
       --nomcast
 
 ExecStop=/usr/bin/docker stop %p-%i
