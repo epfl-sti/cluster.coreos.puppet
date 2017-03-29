@@ -48,10 +48,6 @@
 #   the remaining allocated IPs (supposedly all in the same subnet) as
 #   the value of $external_ipv4_vips across all gateway nodes.
 
-# [*failover_shared_secret*]
-#   A password that serves for gateway nodes to authenticate each other
-#   (used as the --pass flag to ucarp)
-#
 # [*enable_boundary_caching*]
 #   If true, set up a transparent cache for egress HTTP traffic on port 80
 #
@@ -99,7 +95,6 @@ class epflsti_coreos::gateway(
   $external_ipv4_address = undef,
   $external_ipv4_gateway,
   $external_ipv4_vips,
-  $failover_shared_secret = undef,
   $enable_boundary_caching = true
 ) inherits epflsti_coreos::private::params {
   if ($external_ipv4_address) {
@@ -108,7 +103,6 @@ class epflsti_coreos::gateway(
   validate_string($external_interface)
   validate_string($external_ipv4_gateway)
   validate_array($external_ipv4_vips)
-  validate_string($failover_shared_secret)
 
   include ::epflsti_coreos::private::systemd
 
@@ -197,8 +191,7 @@ ExecStop=-/usr/bin/docker rm -f %p
       external_interface => $external_interface,
       external_ipv4_address => $external_ipv4_address,
       external_ipv4_gateway => $external_ipv4_gateway,
-      external_ipv4_vips => $external_ipv4_vips,
-      failover_shared_secret => $failover_shared_secret
+      external_ipv4_vips => $external_ipv4_vips
     }
 
     # haproxy for ingress traffic
