@@ -35,13 +35,9 @@
 # [*$ipv6_physical_netmask*]
 #   The IPv6 netmask to use.
 #
-# === Global Variables:
-#
-# [*$::gateway_ipv4_vip*]  (through template)
-#   The IPv4 address that all internal (non-gateway) nodes have set up
-#   as their default route at provisioning time. The active gateway
-#   node sets up this IP as an alias for itself, and enables routing
-#   and masquerading.
+# [*gateway_ipv4_vips*]
+#   The list of the IPv4 addresses among which to choose from (in a
+#   pseudorandom fashion to achieve load balancing)
 #
 # === Actions:
 #
@@ -76,7 +72,8 @@
 class epflsti_coreos::private::networking(
   $rootpath = $::epflsti_coreos::private::params::rootpath,
   $ipv6_physical_address = $epflsti_coreos::private::params::ipv6_physical_address,
-  $ipv6_physical_netmask = $epflsti_coreos::private::params::ipv6_physical_netmask
+  $ipv6_physical_netmask = $epflsti_coreos::private::params::ipv6_physical_netmask,
+  $gateway_ipv4_vips = parseyaml($::gateway_ipv4_vips_yaml)
 ) inherits epflsti_coreos::private::params {
 
   include ::epflsti_coreos::private::systemd
@@ -112,7 +109,7 @@ MACAddress=<%= @first_mac_address %>
   }
 
   if (! $::epflsti_coreos::gateway::enabled) {
-    $internal_default_route = $::gateway_ipv4_vip
+    $internal_default_route = fqdn_rotate($gateway_ipv4_vips)[0]
   } else {
     $internal_default_route = undef
   }
