@@ -63,7 +63,7 @@ class epflsti_coreos::private::gateway::ucarp(
   $external_interface,
   $external_ipv4_address,
   $external_ipv4_vips,
-  $gateway_ipv4_vips = $::epflsti_coreos::private::params::gateway_ipv4_vips,
+  $gateway_ipv4_vips = parseyaml($::gateway_ipv4_vips_yaml),
   $failover_shared_secret = $::ucarp_failover_shared_secret,
   $vipv4_affinity_table = parseyaml($::vipv4_affinity_table_yaml)
   ) inherits epflsti_coreos::private::params {

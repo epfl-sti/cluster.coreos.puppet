@@ -111,7 +111,11 @@ MACAddress=<%= @first_mac_address %>
 ")
   }
 
-  $uses_internal_gateway = ! $::epflsti_coreos::gateway::enabled
+  if (! $::epflsti_coreos::gateway::enabled) {
+    $internal_default_route = $::gateway_ipv4_vip
+  } else {
+    $internal_default_route = undef
+  }
   systemd::unit { "50-ethbr4-internal.network":
     content => template("epflsti_coreos/networkd/50-ethbr4-internal.network.erb")
   }
@@ -210,9 +214,9 @@ DHCP=no
 
   }
 
-  if ($uses_internal_gateway) {
+  if ($internal_default_route) {
     class { "epflsti_coreos::private::networking::default_route":
-      default_route => $ipv4_gateway_vip
+      default_route => $internal_default_route
     }
   }
 }
