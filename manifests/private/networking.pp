@@ -209,4 +209,10 @@ DHCP=no
 "
 
   }
+
+  if ($uses_internal_gateway) {
+    class { "epflsti_coreos::private::networking::default_route":
+      default_route => $ipv4_gateway_vip
+    }
+  }
 }

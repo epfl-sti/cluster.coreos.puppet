@@ -106,15 +106,6 @@ class epflsti_coreos::gateway(
 
   include ::epflsti_coreos::private::systemd
 
-  exec { "restart networkd in host":
-    command => $::lifecycle_stage ? {
-      "production" => "/usr/bin/systemctl restart systemd-networkd.service",
-      default => "/bin/true ; echo No-op at bootstrap time"
-    },
-    refreshonly => true,
-    path => $::path
-  }
-
   # Feature selection
   $_transparent_forwarding_port = 3129
   if ($external_ipv4_address) {
@@ -123,7 +114,9 @@ class epflsti_coreos::gateway(
     $_enable_masquerade = true
     $_enable_transparent_forwarding = true
     $_enable_squid_and_transparent_proxying = $enable_boundary_caching
-    $_expected_default_route = $external_ipv4_gateway
+    class { "epflsti_coreos::private::networking::default_route":
+      default_route => $external_ipv4_gateway
+    }
   } else {
     # Clean-up case (host is being discharged from acting as gateway)
     $enabled = false
@@ -131,7 +124,7 @@ class epflsti_coreos::gateway(
     $_enable_masquerade = false
     $_enable_transparent_forwarding = false
     $_enable_squid_and_transparent_proxying = false
-    $_expected_default_route = $gateway_ipv4_vip
+    # Default route expectation managed by private/networking.pp instead
   }
 
   # Set up external IPv4 addresses
@@ -200,12 +193,6 @@ ExecStop=-/usr/bin/docker rm -f %p
       start => $_enable_haproxy,
       enable => $_enable_haproxy
     }
-
-    exec { "Ensure we have ${_expected_default_route} as the default route":
-      command => "true ; while route del default; do :; done",
-      path => $path,
-      unless => "/usr/bin/test \"$(/sbin/ip route | sed -n 's/default via \(\S*\) .*/\1/p')\" = \"${_expected_default_route}\"",
-    } ~> Exec["restart networkd in host"]
 
     # Set up / tear down Squid and transparent proxying
     # I am told I should use a systemd.service instead of a quirky "exec".
