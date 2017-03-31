@@ -55,7 +55,7 @@ class epflsti_coreos::private::gateway::ucarp(
   ) inherits epflsti_coreos::private::params {
   file { "${rootpath}/etc/systemd/system/${::cluster_owner}.gateway-ucarp-external@.service":
     ensure => $enable ? { true => "file", default => "absent" },
-    content => template('epflsti_coreos/external_vipv4@.service.erb')
+    content => template('epflsti_coreos/vipv4@.service.erb')
   } ~>
   Exec["systemctl daemon-reload for ucarp configs"]
 
