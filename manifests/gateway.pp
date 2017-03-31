@@ -94,7 +94,7 @@ class epflsti_coreos::gateway(
   $external_interface = undef,
   $external_ipv4_address = undef,
   $external_ipv4_gateway,
-  $external_ipv4_vips,
+  $external_ipv4_vips = parseyaml($::external_ipv4_vips_yaml),
   $enable_boundary_caching = true
 ) inherits epflsti_coreos::private::params {
   if ($external_ipv4_address) {
