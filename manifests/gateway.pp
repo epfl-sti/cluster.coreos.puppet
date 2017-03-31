@@ -190,7 +190,6 @@ ExecStop=-/usr/bin/docker rm -f %p
       enable => !(! $external_ipv4_address),
       external_interface => $external_interface,
       external_ipv4_address => $external_ipv4_address,
-      external_ipv4_gateway => $external_ipv4_gateway,
       external_ipv4_vips => $external_ipv4_vips
     }
 

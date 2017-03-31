@@ -18,10 +18,6 @@
 #   intended for "cleaning up" a former gateway that has been physically
 #   plugged back the "normal" way.
 #
-# [*external_ipv4_gateway*]
-#   IPv4 default route on the external network for the gateway nodes
-#   (mandatory)
-#
 # [*external_ipv4_vips*]
 #   The list of external-facing Virtual IPs (VIPs) that the cluster
 #   manages at the gateway, in CIDR "IPv4/netmask" format.
@@ -66,7 +62,6 @@ class epflsti_coreos::private::gateway::ucarp(
   $enable,
   $external_interface,
   $external_ipv4_address,
-  $external_ipv4_gateway,
   $external_ipv4_vips,
   $gateway_ipv4_vips = $::epflsti_coreos::private::params::gateway_ipv4_vips,
   $failover_shared_secret = $::ucarp_failover_shared_secret,
