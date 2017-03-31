@@ -1,5 +1,5 @@
 [Unit]
-Description=ucarp on <%= @is_external ? "external" : "gateway" %> VIPv4 %i
+Description=ucarp on <%= @where == "internal" ? "external" : "gateway" %> VIPv4 <%= @ip %>
 Requires=docker.service network.target
 After=docker.service network.target
 
@@ -16,23 +16,39 @@ TimeoutStopSec=25
 # /etc/systemd/system/<%= @cluster_owner %>.gateway-ucarp-external@MYVIP.service.d/ip-and-vhid.conf
 ExecStart=/usr/bin/docker run \
     --rm \
-    --name=%p-<%= @title %>  \
+    --name %p  \
     --net=host --cap-add NET_ADMIN \
     nicolerenee/ucarp \
       /usr/sbin/ucarp \
-<%# From the § in ucarp/README that starts with "To understand how ucarp works,"
-  # we see that --advbase acts as the "sticky" setting for the preferred
-  # master:
-  # -%>
-      --advbase=<%= @is_preferred ? 1 : 2 %> \
-      --interface=<%= @external_interface %> \
-      --srcip=<%= @external_ipv4_address.split("/")[0] %> \
-      --vhid=${UCARP_VHID} \
-      --pass=${UCARP_PASS} \
-      --addr=${UCARP_VIRTUALADDRESS} \
+<%
+# From the § in ucarp/README that starts with "To understand how ucarp
+# works," we see that we need to tweak --advbase to get a "sticky"
+# setting for the preferred master:
+
+if @vipv4_affinity_table && @vipv4_affinity_table[@ip]; then
+   @index = @vipv4_affinity_table[@ip].index(@hostname)
+   @priority = @index ? @index + 1 : 30
+else
+   @priority = 30
+end
+
+# 
+@all_vips = (
+      scope['::epflsti_coreos::private::gateway::ucarp::external_ipv4_vips'] + 
+      scope['::epflsti_coreos::private::gateway::ucarp::gateway_ipv4_vips'] )
+-%>
+      --advbase=<%= @priority %> \
+<%- if @priority == 1 -%>
+      --preempt \
+<%- end -%>
+      --interface=<%= @interface %> \
+      --srcip=<%= @membership_protocol_ip %> \
+      --vhid=<%= 100 + @all_vips.index(@ip) %> \
+      --pass=<%= @failover_shared_secret %> \
+      --addr=<%= @ip %> \
       --upscript=/etc/ucarp/vip-up-default.sh \
       --downscript=/etc/ucarp/vip-down-default.sh \
       --nomcast
 
-ExecStop=/usr/bin/docker stop %p-%i
+ExecStop=/usr/bin/docker stop %p
 

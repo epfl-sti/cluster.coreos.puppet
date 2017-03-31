@@ -34,6 +34,12 @@
 #   A password that serves for gateway nodes to authenticate each other
 #   (used as the --pass flag to ucarp)
 #
+# [*gateway_ipv4_vips*]
+#   The IPv4 addresses among which all internal (non-gateway) nodes pick up
+#   exactly one to be their default route. The active gateway
+#   nodes share these IPs as aliases for themselves, and enable routing
+#   and masquerading.
+#
 # === Actions:
 #
 # * Run ucarp-in-Docker (https://hub.docker.com/r/nicolerenee/ucarp/)
@@ -43,6 +49,17 @@
 #   means that the VIP is the only dynamically managed resource; all
 #   other network settings are supposed to be handled by
 #   epflsti_coreos::private::network and/or epflsti_coreos::gateway
+#  
+# === Global Variables:
+#
+# [*$::ipv4_network*]
+#   The CIDR network/netmask for the internal addresses of nodes
+#   and masquerading.
+#
+# [*$::vipv4_affinity_table_yaml*]
+#   A YAML map from VIPs (in dotted-quad notation) to the list of preferred
+#   $::hostname's of gateways that should host them, ordered by preference.
+#   (If a gateway is not listed, it gets priority 30)
 
 class epflsti_coreos::private::gateway::ucarp(
   $rootpath = $::epflsti_coreos::private::params::rootpath,
@@ -51,54 +68,44 @@ class epflsti_coreos::private::gateway::ucarp(
   $external_ipv4_address,
   $external_ipv4_gateway,
   $external_ipv4_vips,
-  $failover_shared_secret = $::ucarp_failover_shared_secret
+  $gateway_ipv4_vips = $::epflsti_coreos::private::params::gateway_ipv4_vips,
+  $failover_shared_secret = $::ucarp_failover_shared_secret,
+  $vipv4_affinity_table = parseyaml($::vipv4_affinity_table_yaml)
   ) inherits epflsti_coreos::private::params {
-  file { "${rootpath}/etc/systemd/system/${::cluster_owner}.gateway-ucarp-external@.service":
-    ensure => $enable ? { true => "file", default => "absent" },
-    content => template('epflsti_coreos/vipv4@.service.erb')
-  } ~>
-  Exec["systemctl daemon-reload for ucarp configs"]
+  define vipv4(
+    $enable,
+    $ip = $title,
+    $where = "internal",
+    $membership_protocol_ip,
+    $interface
+  ) {
+    $vipv4_affinity_table = $::epflsti_coreos::private::gateway::ucarp::vipv4_affinity_table
+    $failover_shared_secret = $::ucarp_failover_shared_secret
+    ::epflsti_coreos::private::systemd::unit { "${::cluster_owner}.vip-${title}-${where}.service":
+      start => $enable,
+      enable => $enable,
+      content => template('epflsti_coreos/vipv4.service.erb')
+    }
+  }
 
-  $_common_dropin_dir = "${rootpath}/etc/systemd/system/${::cluster_owner}.gateway-ucarp-external@.service.d"
-  file { $_common_dropin_dir:
-    ensure => "directory"
-  } ->
-  file { "$_common_dropin_dir/secret.conf":
-    content => inline_template("[Service]
-Environment=\"UCARP_PASS=<%= @failover_shared_secret %>\"
-"),
-    mode => "0600",
-    owner => "root",
-    group => "root"
-  } ~>
+  vipv4 { $external_ipv4_vips:
+    enable => $enable,
+    where => "external",
+    interface => $external_interface,
+    membership_protocol_ip => inline_template("<%= @external_ipv4_address.split('/')[0] %>")
+  }
+
+  vipv4 { $gateway_ipv4_vips:
+   enable => $enable,
+    where => "internal",
+    interface => "ethbr4",
+    membership_protocol_ip => $::ipaddress
+  }
+
   exec { "systemctl daemon-reload for ucarp configs":
     path => $::path,
     command => "systemctl daemon-reload",
     refreshonly => true
   }
-
-  define ucarp_external_vipv4($all_vips) {
-    $_vip = $title
-    $_vhid = inline_template("<%= @all_vips.index(@_vip) + 100 %>")
-    $_service = "${::cluster_owner}.gateway-ucarp-external@${_vip}.service"
-    $_perinstance_dropin_dir = "${rootpath}/etc/systemd/system/${_service}.d"
-    file { $_perinstance_dropin_dir:
-      ensure => "directory"
-    } ->
-    file { "${_perinstance_dropin_dir}/ip-and-vhid.conf":
-      content => inline_template("[Service]
-Environment=UCARP_VIRTUALADDRESS=<%= @_vip %>
-Environment=UCARP_VHID=<%= @_vhid %>
-")
-    } ~>
-    Exec["systemctl daemon-reload for ucarp configs"] ~>
-    ::epflsti_coreos::private::systemd::unit { "${_service}":
-      start => $::epflsti_coreos::private::gateway::ucarp::enable,
-      enable => $::epflsti_coreos::private::gateway::ucarp::enable
-    }
-  }
-
-  ucarp_external_vipv4 { $external_ipv4_vips:
-    all_vips => $external_ipv4_vips
-  }
+    
 }
