@@ -1,7 +1,5 @@
-require 'logger'
-
-$logger = Logger.new(STDERR)
-
+# coding: utf-8
+# permanent_macaddress_#{interface}
 Facter.value(:interfaces).split(',').each do |interface|
   ethtool_out = Facter::Core::Execution.exec("ethtool -P #{interface}")
   next if ! ethtool_out
@@ -14,4 +12,5 @@ Facter.value(:interfaces).split(',').each do |interface|
   end
 end
 
-
+# gateway (from https://projects.puppetlabs.com/issues/12265)
+Facter.add(:ipv4_gateway) do setcode "ip route | awk '/default/{print $3}'" end
