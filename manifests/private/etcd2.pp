@@ -20,8 +20,8 @@
 #
 # === Parameters:
 #
-# [*etcd2_quorum_members*]
-#   A YAML-encoded dict associating etcd2 quorum member names with their
+# [*quorum_members*]
+#   A dict associating etcd2 quorum member names with their
 #   peer-advertised URLs.
 #
 # [*rootpath*]
@@ -44,7 +44,7 @@
 
 class epflsti_coreos::private::etcd2(
   $rootpath = $epflsti_coreos::private::params::rootpath,
-  $etcd2_quorum_members = $epflsti_coreos::private::params::etcd2_quorum_members
+  $quorum_members = parseyaml($::quorum_members_yaml)
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
@@ -58,10 +58,9 @@ class epflsti_coreos::private::etcd2(
     start => true
   }
 
-  $members = parseyaml($etcd2_quorum_members)
-  validate_hash($members)
+  validate_hash($quorum_members)
 
-  $is_member = !empty(intersection([$::ipaddress], values($members)))
+  $is_member = !empty(intersection([$::ipaddress], values($quorum_members)))
 
   file { "/etc/systemd/system/etcd2.service.d":
     ensure => "directory"

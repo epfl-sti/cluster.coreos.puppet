@@ -6,16 +6,23 @@
 #    Where in the Puppet-agent Docker container, the host root is
 #    mounted
 #
+# [*has_ups*]
+#    Whether this host is on Uninterruptible Power Supply
+#
 # [*docker_registry_address*]
 #   The address of the internal Docker registry service, in host:port format
 #
 # [*docker_puppet_image_name*]
 #   The (unqualified) image name for Puppet-agent-in-Docker
 #
-# [*etcd2_quorum_members*]
-#   A YAML-encoded dict associating etcd2 quorum member names with their
-#   peer-advertised URLs.
-
+# [*kubernetes_masters*]
+#    The list of hosts to treat as Kubernetes masters (i.e. where to
+#    run API servers etc.)
+#
+# [*ipv6_physical_address*]
+# [*ipv6_physical_network*]
+# [*ipv6_physical_netmask*]
+#    The parameters to use for the node's IPv6 address
 class epflsti_coreos::private::params {
   $rootpath = "/opt/root"
 
@@ -24,9 +31,8 @@ class epflsti_coreos::private::params {
   $docker_registry_address = "registry.service.consul:5000"
   $docker_puppet_image_name = "cluster.coreos.puppet"
 
-  $etcd2_quorum_members = $::quorum_members
-  $_quorum_members = parseyaml($::quorum_members)
-  $kubernetes_masters = parseyaml(inline_template('<%= @_quorum_members.keys().to_yaml %>'))
+  $kubernetes_masters = parseyaml(inline_template(
+    '<%= YAML.load(@quorum_members_yaml).keys().to_yaml %>'))
 
   $ipv6_physical_network = $::ipv6_physical_network   # From Foreman
   $ipv6_physical_netmask = inline_template('<%= @ipv6_physical_network.split("/")[1] %>')

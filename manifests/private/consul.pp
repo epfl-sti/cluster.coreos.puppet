@@ -27,10 +27,9 @@ class epflsti_coreos::private::consul(
   $enabled = true,
   $consulcli_url = "https://github.com/CiscoCloud/consul-cli/releases/download/v0.3.1/consul-cli_0.3.1_linux_amd64.tar.gz",
   $rootpath = $epflsti_coreos::private::params::rootpath,
-  $quorum_members = $epflsti_coreos::private::params::etcd2_quorum_members
+  $quorum_members = parseyaml($::quorum_members_yaml)
 ) inherits epflsti_coreos::private::params {
-  $_members = parseyaml($quorum_members)
-  $_is_member = !empty(intersection([$::ipaddress], values($_members)))
+  $_is_member = !empty(intersection([$::ipaddress], values($quorum_members)))
   $_consul_service = inline_template("#
 # Managed by Puppet, DO NOT EDIT
 #
@@ -43,7 +42,7 @@ ExecStart=/usr/bin/docker run --rm --name=%p --net=host \
     consul agent \
     -client :: \
     <%if @_is_member %> -ui -server -bootstrap-expect=2 <% end %> \
-    <% @_members.each do |hostname, ip| -%>
+    <% @quorum_members.each do |hostname, ip| -%>
     -join <%= ip %> \
     <% end -%>
     -bind=<%= @ipaddress %>  -datacenter=ne

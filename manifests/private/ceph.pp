@@ -47,9 +47,9 @@
 class epflsti_coreos::private::ceph(
   $enabled = true,
   $rootpath = $epflsti_coreos::private::params::rootpath,
-  $quorum_members = $epflsti_coreos::private::params::etcd2_quorum_members,
-  $is_mon = !empty(intersection([$::ipaddress], values(parseyaml($quorum_members)))),
+  $quorum_members = parseyaml($::quorum_members_yaml),
   $is_osd = "2" == inline_template("<%= $::blockdevices.split(',').length %=>")) inherits epflsti_coreos::private::params {
+  $_is_mon = !empty(intersection([$::ipaddress], values($quorum_members)))
   $_ceph_mon_service = inline_template('#
 [Unit]
 Description=Ceph Monitor
@@ -68,7 +68,7 @@ TimeoutStartSec=120s
 TimeoutStopSec=15s
 
 ')
-  if $is_mon {
+  if $_is_mon {
     $_ceph_config_file = "${rootpath}/etc/ceph/ceph.conf"
     $_service_name = "${::cluster_owner}.ceph_mon.service"
 
@@ -91,7 +91,7 @@ TimeoutStopSec=15s
       path    => $_ceph_config_file,
       section => 'global',
       setting => 'mon initial members',
-      value   => inline_template("<%= YAML.load(@quorum_members).values.join(\" \") %>")
+      value   => inline_template("<%= @quorum_members.values.join(\" \") %>")
     } ~> Exec["restart ${_service_name}"]
 
     systemd::unit { $_service_name:
