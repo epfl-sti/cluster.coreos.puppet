@@ -26,7 +26,7 @@
 class epflsti_coreos::private::params {
   $rootpath = "/opt/root"
 
-  $has_ups = member(parseyaml($::ups_hosts), $::hostname)
+  $has_ups = member(parseyaml($::ups_hosts_yaml), $::hostname)
 
   $docker_registry_address = "registry.service.consul:5000"
   $docker_puppet_image_name = "cluster.coreos.puppet"
