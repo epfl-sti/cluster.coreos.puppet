@@ -8,7 +8,8 @@
 #    The Kubernetes version to install.
 #
 # [*kubernetes_masters*]
-#   A list of hostnames of Kubernetes masters.
+#    The list of hosts to treat as Kubernetes masters (i.e. where to
+#    run API servers etc.)
 #
 # [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
@@ -27,7 +28,7 @@
 
 class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.5.4",
-  $kubernetes_masters = $::epflsti_coreos::private::params::kubernetes_masters,
+  $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
@@ -37,7 +38,7 @@ class epflsti_coreos::private::kubernetes(
   $api_server_urls = inline_template('<%= @kubernetes_masters.map { |host| "https://#{host}/" }.join "," %>')
   $kubeconfig_path = "/etc/kubernetes/kubeconfig.yaml"
   # Quite unfortunately needed, pending resolution of https://github.com/kubernetes/kubernetes/issues/18174:
-  $first_apiserver = inline_template('<%= @kubernetes_masters[0] %>')
+  $first_apiserver = inline_template('<%= @kubernetes_masters[1] %>')
 
   concat::fragment { "Kubernetes stuff for /etc/environment (all nodes)":
       target => "/etc/environment",

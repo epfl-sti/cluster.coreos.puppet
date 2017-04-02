@@ -15,10 +15,6 @@
 # [*docker_puppet_image_name*]
 #   The (unqualified) image name for Puppet-agent-in-Docker
 #
-# [*kubernetes_masters*]
-#    The list of hosts to treat as Kubernetes masters (i.e. where to
-#    run API servers etc.)
-#
 # [*ipv6_physical_address*]
 # [*ipv6_physical_network*]
 # [*ipv6_physical_netmask*]
