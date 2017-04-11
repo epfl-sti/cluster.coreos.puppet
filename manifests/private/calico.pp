@@ -2,8 +2,8 @@
 #
 # === Parameters:
 #
-# [*calicoctl_url*]
-#    Where to download the calicoctl binary from
+# [*calico_version*]
+#    The version number of Calico to use
 #
 # [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
@@ -19,15 +19,16 @@
 # (see networking.pp)
 #
 class epflsti_coreos::private::calico (
-  $calicoctl_url = "http://www.projectcalico.org/builds/calicoctl",
+  $calico_version = "1.1.1",
   $rootpath = $epflsti_coreos::private::params::rootpath,
   $cni_version = "v1.6.1"
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
+  $calicoctl_url = "https://github.com/projectcalico/calicoctl/releases/download/v${calico_version}/calicoctl"
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
   $calicoctl_is_obsolete = (
-    (versioncmp($::calicoctl_version, "0.99999999999") < 0))
+    (versioncmp($::calicoctl_version, $calico_version) < 0))
   if $calicoctl_is_obsolete {
     exec { "Remove obsolete version of calicoctl":
       command => "rm -f $calicoctl_bin || true",
