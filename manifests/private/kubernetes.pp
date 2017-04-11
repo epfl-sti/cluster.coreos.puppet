@@ -27,7 +27,7 @@
 # stage (see ../init.pp for details on what that is).
 
 class epflsti_coreos::private::kubernetes(
-  $k8s_version = "1.5.4",
+  $k8s_version = "1.6.1",
   $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
@@ -231,7 +231,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-controller-manager
-    image: quay.io/coreos/hyperkube:v1.5.4_coreos.0
+    image: quay.io/coreos/hyperkube:${kube_quay_version}
     command:
     - /hyperkube
     - controller-manager
