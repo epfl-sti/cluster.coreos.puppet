@@ -29,7 +29,7 @@
 #   (required)  
 #
 # [*external_ipv4_address*]
-#   Fixed IPv4 address on the external network, as a list of strings
+#   Fixed IPv4 address on the external network, as a string
 #   in CIDR "IPv4/netmask" format. If undefined, do not configure a
 #   gateway at all (keep the bonded pair set up by
 #   epflsti_coreos::private::network); such a configuration is
@@ -80,7 +80,7 @@
 #
 # * Change the default route to point to $external_ipv4_gateway
 #
-# * (TODO) Set up as many ucarp instances as needed to handle
+# * Set up as many ucarp instances as needed to handle
 #   internal and external VIPs
 # 
 # === Bootstrapping:
@@ -91,8 +91,8 @@
 
 class epflsti_coreos::gateway(
   $rootpath = $::epflsti_coreos::private::params::rootpath,
-  $external_interface = undef,
-  $external_ipv4_address = undef,
+  $external_interface,
+  $external_ipv4_address,
   $external_ipv4_gateway,
   $external_ipv4_vips = parseyaml($::external_ipv4_vips_yaml),
   $enable_boundary_caching = true
