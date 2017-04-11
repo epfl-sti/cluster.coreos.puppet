@@ -37,8 +37,6 @@ class epflsti_coreos::private::kubernetes(
   $kube_quay_version = "v${k8s_version}_coreos.0"
   $api_server_urls = inline_template('<%= @kubernetes_masters.map { |host| "https://#{host}/" }.join "," %>')
   $kubeconfig_path = "/etc/kubernetes/kubeconfig.yaml"
-  # Quite unfortunately needed, pending resolution of https://github.com/kubernetes/kubernetes/issues/18174:
-  $first_apiserver = inline_template('<%= @kubernetes_masters[1] %>')
 
   concat::fragment { "Kubernetes stuff for /etc/environment (all nodes)":
       target => "/etc/environment",
@@ -112,6 +110,14 @@ spec:
     name: ssl-certs-host
 "
   }  # kubelet_manifest "kube-apiserver"
+
+
+  ensure_resource("class", epflsti_coreos::private::quorum_proxy)
+  epflsti_coreos::private::quorum_proxy::quorum_forward { "kubernetes-apiserver":
+    mode => "http_to_https",
+    port => 8080,
+    target_port => 443
+  }
 
   kubelet_manifest { "kube-proxy":
       enable => true,  # "The Kubernetes network proxy runs on each node"

@@ -33,6 +33,7 @@ class epflsti_coreos::private::kubernetes::keys(
   } else {
     $worker_key_file = "${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker-key.pem"
     $worker_cert_file = "${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker.pem"
+    $worker_combined_cert_and_key_file = "${rootpath}/etc/kubernetes/ssl/${::fqdn}-worker-key-and-cert.pem"
     exec { "copy agent key for worker Kubelet":
       command => "cp -a /etc/puppet/ssl/private_keys/${::fqdn}.pem  ${worker_key_file}",
       path => $::path,
@@ -55,6 +56,18 @@ class epflsti_coreos::private::kubernetes::keys(
       group => 0,  # root
       mode => "0644"
     }
-  }
+
+    exec { "create combined cert and key file for haproxy":
+      command => "cat /etc/puppet/ssl/certs/${::fqdn}.pem /etc/puppet/ssl/private_keys/${::fqdn}.pem > ${worker_combined_cert_and_key_file}",
+      path => $::path,
+      creates => $worker_combined_cert_and_key_file,
+      require => File["${rootpath}/etc/kubernetes/ssl"]
+    } ->
+    file { $worker_combined_cert_and_key_file:
+      owner => 0,    # root
+      group => 500,  # core
+      mode => "0640"
+    }
+}
 }
 

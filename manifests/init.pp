@@ -42,6 +42,7 @@ class epflsti_coreos() {
     class { "epflsti_coreos::private::consul": }
     class { "epflsti_coreos::private::etcd2":  }
     class { "epflsti_coreos::private::calico":  }
+    class { "epflsti_coreos::private::quorum_proxy": }
     class { "epflsti_coreos::private::kubernetes": }
 
     ######################## THE FINISHING TOUCH #########################

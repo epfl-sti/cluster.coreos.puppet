@@ -41,6 +41,7 @@
 # * paragraph "Add a New Member" in
 #   https://github.com/coreos/etcd/blob/master/Documentation/runtime-configuration.md
 # * https://github.com/coreos/etcd/blob/master/Documentation/admin_guide.md
+# * quorum_proxy.pp and the comment about *not* using it for etcd2
 
 class epflsti_coreos::private::etcd2(
   $rootpath = $epflsti_coreos::private::params::rootpath,
