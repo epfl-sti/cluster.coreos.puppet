@@ -6,19 +6,15 @@
 #
 # Note: it would be possible, but unwise to use this to proxy etcd.
 # Besides preventing setups where Docker depends on etcd (such as
-# calico as a Docker-network backend), this saves us nothing as etcd
-# is already bundled with CoreOS.
-#
-# [*quorum_members*]
-#   A dict associating quorum member names with their
-#   IP addresses.
+# calico as a Docker-network backend), this saves us nothing disk-wise
+# as etcd is already bundled with CoreOS.
 #
 
 class epflsti_coreos::private::quorum_proxy(
   $rootpath = $epflsti_coreos::private::params::rootpath,
-  $quorum_members = parseyaml($::quorum_members_yaml)
 ) inherits epflsti_coreos::private::params {
   include epflsti_coreos::private::systemd
+
   concat { "${rootpath}/etc/haproxy.cfg":
     ensure => "present"
   } ~>
@@ -30,17 +26,17 @@ class epflsti_coreos::private::quorum_proxy(
 Description=TCP proxy to quorum members
 After=docker.service
 Requires=docker.service
-ConditionFileNotEmpty=/etc/haproxy.cfg
 
 [Service]
 ExecStartPre=-/usr/bin/docker rm -f %n
 ExecStartPre=-/usr/bin/docker pull haproxy:alpine
-ExecStart=/usr/bin/docker run --rm --name %n <% -%>
+SuccessExitStatus=98
+ExecStart=/bin/bash -c 'set -e -x; grep frontend /etc/haproxy.cfg || sleep infinity; exec docker run --rm --name %n <% -%>
   --net=host <% -%>
   -v /etc/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg <% -%>
   -v /etc/kubernetes/ssl/<%= @fqdn %>-worker-key-and-cert.pem:/etc/client-cert-and-key.pem <% -%>
   -v /etc/kubernetes/ssl/ca.pem:/etc/ca.pem <% -%>
-  haproxy:alpine
+  haproxy:alpine'
 
 [Install]
 WantedBy=multi-user.target
@@ -52,7 +48,7 @@ WantedBy=multi-user.target
     $port,
     $target_port = $port,
     $rootpath = $::epflsti_coreos::private::quorum_proxy::rootpath,
-    $quorum_members = $::epflsti_coreos::private::quorum_proxy::quorum_members
+    $quorum_members = parseyaml($::quorum_members_yaml)
   ) {
     $is_member = !empty(intersection([$::ipaddress], values($quorum_members)))
 
