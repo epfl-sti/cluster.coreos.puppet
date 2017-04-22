@@ -23,7 +23,7 @@
 # === Bootstrapping:
 #
 # This class does *not* configure or start the Kubelet. This is done in ancillary
-# class epflsti_coreos::private::kubernetes::kubelet_manifest, at "production-ready"
+# class epflsti_coreos::private::kubernetes::static_pod, at "production-ready"
 # stage (see ../init.pp for details on what that is).
 
 class epflsti_coreos::private::kubernetes(
@@ -59,7 +59,7 @@ KUBELET_VERSION=<%= kube_quay_version %>
     # Not started yet; see kubernetes/start_kubelet.pp
   }
 
-  kubelet_manifest { "kube-apiserver":
+  static_pod { "kube-apiserver":
       enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
@@ -79,6 +79,7 @@ spec:
     - --apiserver-count=${master_count}
     - --allow-privileged=true
     - --service-cluster-ip-range=192.168.12.0/24
+    - --storage-backend=etcd2
     - --secure-port=443
     - --advertise-address=${::ipaddress}
     - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
@@ -109,7 +110,7 @@ spec:
       path: /usr/share/ca-certificates
     name: ssl-certs-host
 "
-  }  # kubelet_manifest "kube-apiserver"
+  }  # static_pod "kube-apiserver"
 
 
   ensure_resource("class", epflsti_coreos::private::quorum_proxy)
@@ -119,7 +120,7 @@ spec:
     target_port => 443
   }
 
-  kubelet_manifest { "kube-proxy":
+  static_pod { "kube-proxy":
       enable => true,  # "The Kubernetes network proxy runs on each node"
                        # (http://kubernetes.io/docs/admin/kube-proxy/)
       content => inline_template("apiVersion: v1
@@ -168,7 +169,7 @@ spec:
       path: /etc/kubernetes/ssl
 <%- end -%>
 ")
-  } ~>  # kubelet_manifest "kube-proxy"
+  } ~>  # static_pod "kube-proxy"
   exec { "reload kubelet after updating kube-proxy":
     command => "systemctl restart kubelet",
     path => $::path,
@@ -192,7 +193,7 @@ spec:
   }
 
   # Run kube-scheduler in high availability
-  kubelet_manifest { "kube-scheduler":
+  static_pod { "kube-scheduler":
       enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
@@ -219,7 +220,7 @@ spec:
 "
   }
 
-  kubelet_manifest { "kube-controller-manager":
+  static_pod { "kube-controller-manager":
     enable => $is_master,
     content => "
 apiVersion: v1
@@ -295,7 +296,7 @@ spec:
 }')
   }
 
-  define kubelet_manifest (
+  define static_pod (
     $enable = true,
     $content = undef,
     $rootpath = $::epflsti_coreos::private::params::rootpath
