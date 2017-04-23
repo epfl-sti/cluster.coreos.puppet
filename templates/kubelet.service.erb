@@ -4,8 +4,8 @@
 
 [Unit]
 Description=Kubelet in a box (Docker)
-After=docker.service calico-node.service calico-libnetwork.service
-Requires=docker.service calico-node.service calico-libnetwork.service
+After=docker.service calico-node.service
+Requires=docker.service calico-node.service
 ConditionDirectoryNotEmpty=/opt/cni/bin
 
 [Service]

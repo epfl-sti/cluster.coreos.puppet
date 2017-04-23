@@ -18,10 +18,9 @@
 #
 # * Install the calicoctl command to /opt/bin
 #
-# * Run Calico on the local node (calico-node.service)
-#
-# * Run the libnetwork adapter (calico-libnetwork.service) to support
-#   "docker network create -d calico" and friends
+# * Run Calico on the local node (calico-node.service), which provides
+#   Calico API and routing services as well as "docker network"
+#   (libnetwork) services (as sockets under /run/docker/plugins)
 #
 # * Install the CNI binaries to /opt/cni/bin, so that Kubernetes may
 #   also create / delete IPv6 endpoints with Calico
@@ -76,30 +75,14 @@ ExecStop=-/usr/bin/docker stop calico-node
 [Install]
 WantedBy=multi-user.target
 "),
+    subscribe => Exec["curl calicoctl"]
   }
 
+  # Obsolete; calicoctl v1.1.1's "calicoctl node run" now provides
+  # and exposes /run/docker/plugins directly
   systemd::unit { "calico-libnetwork.service":
-    start => true,
-    enable => true,
-    content => inline_template("
-[Unit]
-Description=Calico libnetwork service
-
-After=docker.service etcd2.service
-Requires=docker.service etcd2.service
-
-[Service]
-ExecStartPre=-/usr/bin/docker rm -f calico-libnetwork
-ExecStart=/usr/bin/docker run --privileged --net=host \
- -v /run/docker/plugins:/run/docker/plugins \
- --name=calico-libnetwork \
- -e ETCD_AUTHORITY=localhost:2379 \
- calico/node-libnetwork:v0.8.0  <%# Pending resolution of https://github.com/projectcalico/calico-containers/issues/966 %>
-ExecStop=-/usr/bin/docker stop calico-libnetwork
-
-[Install]
-WantedBy=multi-user.target
-"),
+    ensure => "absent",
+    start => false
   }
 
   # Inspired from the "install-cni" part of
