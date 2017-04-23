@@ -13,7 +13,7 @@ docker exec -it <%= @cluster_owner %>.ceph_mon.service ceph health detail
 fleetctl list-machines
 fleetctl list-units
 fleetctl list-unit-files
-kubectl get pods --all-namespaces --show-all=true -o=wide
+kubectl get all --all-namespaces --show-all=true -o=wide
 <%- else -%>
 sudo sh -c "source /mnt/etc/environment; /home/core/cluster.coreos.install/install.sh puppet"
 (cd /home/core/cluster.coreos.install/; sudo git pull)
