@@ -23,7 +23,7 @@
 # === Bootstrapping:
 #
 # This class does *not* configure or start the Kubelet. This is done in ancillary
-# class epflsti_coreos::private::kubernetes::static_pod, at "production-ready"
+# class epflsti_coreos::private::kubernetes::start_kubelet, at "production-ready"
 # stage (see ../init.pp for details on what that is).
 
 class epflsti_coreos::private::kubernetes(
@@ -59,7 +59,7 @@ KUBELET_VERSION=<%= kube_quay_version %>
     # Not started yet; see kubernetes/start_kubelet.pp
   }
 
-  static_pod { "kube-apiserver":
+  static_manifest { "kube-apiserver":
       enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
@@ -110,7 +110,7 @@ spec:
       path: /usr/share/ca-certificates
     name: ssl-certs-host
 "
-  }  # static_pod "kube-apiserver"
+  }  # static_manifest "kube-apiserver"
 
 
   ensure_resource("class", epflsti_coreos::private::quorum_proxy)
@@ -120,7 +120,7 @@ spec:
     target_port => 443
   }
 
-  static_pod { "kube-proxy":
+  static_manifest { "kube-proxy":
       enable => true,  # "The Kubernetes network proxy runs on each node"
                        # (http://kubernetes.io/docs/admin/kube-proxy/)
       content => inline_template("apiVersion: v1
@@ -169,7 +169,7 @@ spec:
       path: /etc/kubernetes/ssl
 <%- end -%>
 ")
-  } ~>  # static_pod "kube-proxy"
+  } ~>  # static_manifest "kube-proxy"
   exec { "reload kubelet after updating kube-proxy":
     command => "systemctl restart kubelet",
     path => $::path,
@@ -193,7 +193,7 @@ spec:
   }
 
   # Run kube-scheduler in high availability
-  static_pod { "kube-scheduler":
+  static_manifest { "kube-scheduler":
       enable => $is_master,
       content => "apiVersion: v1
 kind: Pod
@@ -220,7 +220,7 @@ spec:
 "
   }
 
-  static_pod { "kube-controller-manager":
+  static_manifest { "kube-controller-manager":
     enable => $is_master,
     content => "
 apiVersion: v1
@@ -296,7 +296,12 @@ spec:
 }')
   }
 
-  define static_pod (
+  # Record a Kubernetes "manifest" (to run a pod or any other
+  # Kubernetes object) as a file in /etc/kubernetes/manifests.
+  #
+  # This lets one run things on Kubernetes without having to issue
+  # commands to an apiserver.
+  define static_manifest (
     $enable = true,
     $content = undef,
     $rootpath = $::epflsti_coreos::private::params::rootpath

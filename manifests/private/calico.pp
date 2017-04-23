@@ -2,8 +2,13 @@
 #
 # === Parameters:
 #
-# [*calico_version*]
-#    The version number of Calico to use
+# [*calicoctl_version*]
+#    The version number to use for the calicoctl command (hint: look
+#    it up on http://docs.projectcalico.org/v2.1/releases/)
+#
+# [*cni_version*]
+#    The version number to use for the /opt/cni/bin adapter commands
+#    (hint: look up versions on http://docs.projectcalico.org/v2.1/releases/)
 #
 # [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
@@ -11,7 +16,15 @@
 #
 # === Actions:
 #
-# * Run Calico on the local node
+# * Install the calicoctl command to /opt/bin
+#
+# * Run Calico on the local node (calico-node.service)
+#
+# * Run the libnetwork adapter (calico-libnetwork.service) to support
+#   "docker network create -d calico" and friends
+#
+# * Install the CNI binaries to /opt/cni/bin, so that Kubernetes may
+#   also create / delete IPv6 endpoints with Calico
 #
 # === Pre-requisites:
 #
@@ -19,16 +32,17 @@
 # (see networking.pp)
 #
 class epflsti_coreos::private::calico (
-  $calico_version = "1.1.1",
-  $rootpath = $epflsti_coreos::private::params::rootpath,
-  $cni_version = "v1.6.1"
+  $calicoctl_version = "1.1.1",
+  $cni_version = "v1.6.1",
+  $rootpath = $epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
-  $calicoctl_url = "https://github.com/projectcalico/calicoctl/releases/download/v${calico_version}/calicoctl"
+  $calicoctl_url = "https://github.com/projectcalico/calicoctl/releases/download/v${calicoctl_version}/calicoctl"
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
   $calicoctl_is_obsolete = (
-    (versioncmp($::calicoctl_version, $calico_version) < 0))
+    (versioncmp($::calicoctl_version,
+                $epflsti_coreos::private::calico::calicoctl_version) < 0))
   if $calicoctl_is_obsolete {
     exec { "Remove obsolete version of calicoctl":
       command => "rm -f $calicoctl_bin || true",
@@ -46,15 +60,46 @@ class epflsti_coreos::private::calico (
     mode => "0755"
   } ->
   systemd::unit { "calico-node.service":
+    # Inspired from https://github.com/projectcalico/calico-containers/blob/master/docs/CalicoAsService.md
     start => true,
     enable => true,
-    content => template('epflsti_coreos/calico-node.service.erb'),
+    content => inline_template("[Unit]
+Description=Calico node service
+After=docker.service etcd2.service
+Requires=docker.service etcd2.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f calico-node
+ExecStart=/opt/bin/calicoctl node run --init-system --ip6=<%= @ipaddress6 %>
+ExecStop=-/usr/bin/docker stop calico-node
+
+[Install]
+WantedBy=multi-user.target
+"),
   }
 
   systemd::unit { "calico-libnetwork.service":
     start => true,
     enable => true,
-    content => template('epflsti_coreos/calico-libnetwork.service.erb'),
+    content => inline_template("
+[Unit]
+Description=Calico libnetwork service
+
+After=docker.service etcd2.service
+Requires=docker.service etcd2.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f calico-libnetwork
+ExecStart=/usr/bin/docker run --privileged --net=host \
+ -v /run/docker/plugins:/run/docker/plugins \
+ --name=calico-libnetwork \
+ -e ETCD_AUTHORITY=localhost:2379 \
+ calico/node-libnetwork:v0.8.0  <%# Pending resolution of https://github.com/projectcalico/calico-containers/issues/966 %>
+ExecStop=-/usr/bin/docker stop calico-libnetwork
+
+[Install]
+WantedBy=multi-user.target
+"),
   }
 
   # Inspired from the "install-cni" part of
