@@ -54,7 +54,7 @@ class epflsti_coreos::private::systemd {
     $_systemd_unit_file = "/etc/systemd/${_subdir}/${name}"
 
     if ($ensure == "absent") {
-      $_do_enable = $false
+      $_do_enable = false
     } elsif ($enable == undef) {
       if ($mask == undef) {
         $_do_enable = $_kind == "service"
