@@ -12,6 +12,9 @@
 # [*docker_registry_address*]
 #   The address of the internal Docker registry service, in host:port format
 #
+# [*docker_proxy_cache_address*]
+#   The address of the internal Docker proxy cache, in host:port format
+#
 # [*docker_puppet_image_name*]
 #   The (unqualified) image name for Puppet-agent-in-Docker
 #
@@ -25,6 +28,7 @@ class epflsti_coreos::private::params {
   $has_ups = member(parseyaml($::ups_hosts_yaml), $::hostname)
 
   $docker_registry_address = "registry.service.consul:5000"
+  $docker_proxy_cache_address = "docker-proxy-cache.service.consul:5001"
   $docker_puppet_image_name = "cluster.coreos.puppet"
 
   $kubernetes_masters = parseyaml(inline_template(

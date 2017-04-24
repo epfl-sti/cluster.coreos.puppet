@@ -21,7 +21,8 @@
 
 class epflsti_coreos::private::docker(
   $rootpath                = $::epflsti_coreos::private::params::rootpath,
-  $docker_registry_address = $::epflsti_coreos::private::params::docker_registry_address
+  $docker_registry_address = $::epflsti_coreos::private::params::docker_registry_address,
+  $docker_proxy_cache_address = $::epflsti_coreos::private::params::docker_proxy_cache_address
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
@@ -49,7 +50,7 @@ Wants=etcd2.service
 After=etcd2.service
 
 [Service]
-Environment=\"DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --registry-mirror=http://${docker_registry_address} --cluster-store=etcd://127.0.0.1:2379\"
+Environment=\"DOCKER_OPTS=--insecure-registry ${docker_registry_address} --registry-mirror=http://${docker_proxy_cache_address} --cluster-store=etcd://127.0.0.1:2379\"
 ",
     alias => "coreos-docker-private-registry-config"
   } ~>
@@ -71,6 +72,15 @@ Environment=\"DOCKER_OPTS=--insecure-registry registry.service.consul:5000 --reg
     path => $::path,
     command => "ls -l ${rootpath}/opt/bin/pipework; set -e -x; exec > ${rootpath}/tmp/log 2>&1; curl -o ${rootpath}/opt/bin/pipework https://raw.githubusercontent.com/jpetazzo/pipework/master/pipework && chmod a+x ${rootpath}/opt/bin/pipework",
     creates => "${rootpath}/opt/bin/pipework"
+  }
+
+  # Trust the Puppet CA to certify the (now not-so-)insecure registry
+  file { [ "${rootpath}/etc/docker/certs.d", "${rootpath}/etc/docker/certs.d/registry.service.consul"]:
+    ensure => "directory"
+  } ->
+  exec { "cp ${rootpath}/etc/puppet/ssl/certs/ca.pem ${rootpath}/etc/docker/certs.d/registry.service.consul/ca.crt":
+    path => $::path,
+    creates => "${rootpath}/etc/docker/certs.d/registry.service.consul/ca.crt"
   }
 
   # Poor man's "docker sync"
