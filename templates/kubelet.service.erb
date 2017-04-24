@@ -35,6 +35,7 @@ ExecStart=/bin/sh -x /usr/lib/coreos/kubelet-wrapper <% -%>
   --api-servers=http://127.0.0.1:8080 <% -%>
   --network-plugin-dir=/etc/kubernetes/cni/net.d <% -%>
   --network-plugin=cni <% -%>
+  --cni-bin-dir=/opt/cni/bin <% -%>
   <%- if @is_master -%>
   --register-schedulable=false <% -%>
   <%- else -%>
