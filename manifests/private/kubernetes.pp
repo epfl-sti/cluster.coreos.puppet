@@ -22,9 +22,10 @@
 #
 # === Bootstrapping:
 #
-# This class does *not* configure or start the Kubelet. This is done in ancillary
-# class epflsti_coreos::private::kubernetes::start_kubelet, at "production-ready"
-# stage (see ../init.pp for details on what that is).
+# This class does *not* configure or start the Kubelet. This is done
+# in the epflsti_coreos::private::kubernetes::start_kubelet ancillary
+# class, at production-ready" stage (see ../init.pp for details on
+# what that is).
 
 class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.6.1",
@@ -35,7 +36,6 @@ class epflsti_coreos::private::kubernetes(
   $is_master = !empty(intersection([$::fqdn], $kubernetes_masters))
   $master_count = size($kubernetes_masters)
   $kube_quay_version = "v${k8s_version}_coreos.0"
-  $api_server_urls = inline_template('<%= @kubernetes_masters.map { |host| "https://#{host}/" }.join "," %>')
   $kubeconfig_path = "/etc/kubernetes/kubeconfig.yaml"
 
   concat::fragment { "Kubernetes stuff for /etc/environment (all nodes)":
