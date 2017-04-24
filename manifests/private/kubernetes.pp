@@ -28,7 +28,7 @@
 # what that is).
 
 class epflsti_coreos::private::kubernetes(
-  $k8s_version = "1.6.1",
+  $k8s_version = "1.6.2",
   $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {

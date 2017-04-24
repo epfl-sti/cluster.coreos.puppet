@@ -32,17 +32,20 @@
 #
 class epflsti_coreos::private::calico (
   $calicoctl_version = "1.1.1",
-  $cni_version = "v1.6.1",
+  $cni_version = "1.6.2",
   $rootpath = $epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
 
   $calicoctl_url = "https://github.com/projectcalico/calicoctl/releases/download/v${calicoctl_version}/calicoctl"
   $calicoctl_bin = "${rootpath}/opt/bin/calicoctl"
-  $calicoctl_is_obsolete = (
+  $_calicoctl_is_obsolete = (
     (versioncmp($::calicoctl_version,
                 $epflsti_coreos::private::calico::calicoctl_version) < 0))
-  if $calicoctl_is_obsolete {
+  $_calico_cni_is_obsolete = (
+    (versioncmp($::calico_cni_version,
+                $epflsti_coreos::private::calico::cni_version) < 0))
+  if $_calicoctl_is_obsolete {
     exec { "Remove obsolete version of calicoctl":
       command => "rm -f $calicoctl_bin || true",
       path => $::path
@@ -87,15 +90,22 @@ WantedBy=multi-user.target
 
   # Inspired from the "install-cni" part of
   # https://coreos.com/kubernetes/docs/latest/deploy-master.html
-  $_install_cni_docker_image = "quay.io/calico/cni:${cni_version}"
-  exec { "install Calico CNI to /opt/cni/bin":
+  $_install_cni_docker_image = "quay.io/calico/cni:v${cni_version}"
+  exec { "Install Calico CNI to /opt/cni/bin":
     path => "${::path}:${rootpath}/bin",
-    unless => "test -f ${rootpath}/opt/cni/bin/calico",
+    creates => "${rootpath}/opt/cni/bin/calico",
     command => inline_template('true ; set -e -x
 docker pull <%= @_install_cni_docker_image %>
 docker run --rm --name calico-install-cni \
    --volume /opt/cni/bin:/host/opt/cni/bin \
    -e SLEEP=false \
    <%= @_install_cni_docker_image %> /install-cni.sh')
+  }
+
+  if $_calico_cni_is_obsolete {
+    exec { "Remove obsolete version of /opt/cni/bin":
+      command => "rm -f \"${rootpath}\"/opt/cni/bin/*",
+      path => $::path
+    } -> Exec["Install Calico CNI to /opt/cni/bin"]
   }
 }
