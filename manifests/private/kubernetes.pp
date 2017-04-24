@@ -37,6 +37,7 @@ class epflsti_coreos::private::kubernetes(
   $master_count = size($kubernetes_masters)
   $kube_quay_version = "v${k8s_version}_coreos.0"
   $kubeconfig_path = "/etc/kubernetes/kubeconfig.yaml"
+  $_calico_cni_conf = "${rootpath}/etc/kubernetes/cni/net.d/10-calico.conf"
 
   concat::fragment { "Kubernetes stuff for /etc/environment (all nodes)":
       target => "/etc/environment",
@@ -55,8 +56,9 @@ KUBELET_VERSION=<%= kube_quay_version %>
 
   systemd::unit { "kubelet.service":
     content => template("epflsti_coreos/kubelet.service.erb"),
-    enable => true
+    enable => true,
     # Not started yet; see kubernetes/start_kubelet.pp
+    subscribe => File[$_calico_cni_conf]
   }
 
   static_manifest { "kube-apiserver":
@@ -270,7 +272,7 @@ spec:
   file { ["${rootpath}/etc/kubernetes/cni", "${rootpath}/etc/kubernetes/cni/net.d"] :
     ensure => "directory"
   } ->
-  file { "${rootpath}/etc/kubernetes/cni/net.d/10-calico.conf":
+  file { $_calico_cni_conf:
     content => inline_template('{
     "name": "calico",
     "type": "calico",
@@ -287,7 +289,7 @@ spec:
         "type": "calico"
     },
     "policy": {
-      "type": "k8s",
+        "type": "k8s",
         "kubeconfig": "/etc/kubernetes/kubeconfig.yaml"
     },
     "kubernetes": {
