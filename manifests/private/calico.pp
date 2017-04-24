@@ -95,7 +95,6 @@ WantedBy=multi-user.target
 docker pull <%= @_install_cni_docker_image %>
 docker run --rm --name calico-install-cni \
    --volume /opt/cni/bin:/host/opt/cni/bin \
-   --volume /etc/cni/net.d:/host/etc/cni/net.d \
    -e SLEEP=false \
    <%= @_install_cni_docker_image %> /install-cni.sh')
   }
