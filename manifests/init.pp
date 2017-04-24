@@ -22,6 +22,7 @@ class epflsti_coreos() {
   ################### BOOTSTRAP: BEFORE REBOOT ##########################
   class { "epflsti_coreos::private::networking": }
   class { "epflsti_coreos::private::ssh_authorized_keys": }
+  class { "epflsti_coreos::private::ca_certificates": }
   class { "epflsti_coreos::private::puppet": }
   # For the IPMI facts, and to (attempt to) set an IPMI password:
   class { "epflsti_coreos::private::ipmi": }
