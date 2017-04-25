@@ -238,7 +238,6 @@ spec:
       order => '20',
       content => "KUBECONFIG=${kubeconfig_path}\n"
     }
-    epflsti_coreos::private::environment::export_in_interactive_shell{ "KUBECONFIG": }
   }
 
   # Run kube-scheduler in high availability
