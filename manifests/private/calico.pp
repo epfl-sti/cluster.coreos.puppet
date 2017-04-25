@@ -31,7 +31,7 @@
 # (see networking.pp)
 #
 class epflsti_coreos::private::calico (
-  $calicoctl_version = "1.1.2-rc2",
+  $calicoctl_version = "1.1.3",
   $cni_version = "1.6.2",
   $rootpath = $epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
@@ -72,7 +72,7 @@ Requires=docker.service etcd2.service
 
 [Service]
 ExecStartPre=-/usr/bin/docker rm -f calico-node
-ExecStart=/opt/bin/calicoctl node run --init-system --ip6=<%= @ipaddress6 %>
+ExecStart=/opt/bin/calicoctl node run --init-system --name=<%= @hostname %> --ip6=<%= @ipaddress6 %>
 ExecStop=-/usr/bin/docker stop calico-node
 
 [Install]
