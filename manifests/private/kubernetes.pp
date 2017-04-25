@@ -95,7 +95,7 @@ KUBELET_VERSION=<%= @kubelet_version %>
     <%- if @is_master -%>
      --register-schedulable=false  <% -%>
     <% else -%>
-     --register-node=/etc/kubernetes/manifests <% -%>
+     --register-node=true <% -%>
      --kubeconfig=<%= @kubeconfig_path %> <% -%>
      --tls-cert-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker.pem <% -%>
      --tls-private-key-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker-key.pem <% -%>
