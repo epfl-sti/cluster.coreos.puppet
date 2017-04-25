@@ -1,11 +1,22 @@
 # Configure Kubernetes
 #
 # Based on https://coreos.com/kubernetes/docs/latest/deploy-master.html
+# and https://coreos.com/kubernetes/docs/latest/deploy-workers.html,
+# except that we use Google's Kubelet-in-Docker instead of CoreOS'
+# Kubelet-in-rkt.
 #
 # === Parameters:
 #
 # [*k8s_version*]
-#    The Kubernetes version to install.
+#    The version to install for kubectl and the Kubernetes system
+#    workloads: apiserver, controller-manager etc. (from
+#    quay.io/coreos/hyperkube)
+#
+# [*kubelet_version*]
+#    The Kubelet version to install (from
+#    gcr.io/google_containers/hyperkube-amd64, *not* the CoreOS-provided
+#    rkt image that is lagging behind in terms of versions at the moment,
+#    and doesn't work with "pure" Calico).
 #
 # [*kubernetes_masters*]
 #    The list of hosts to treat as Kubernetes masters (i.e. where to
@@ -29,6 +40,7 @@
 
 class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.6.2",
+  $kubelet_version = "1.7.0-alpha.2",
   $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
@@ -43,7 +55,7 @@ class epflsti_coreos::private::kubernetes(
       target => "/etc/environment",
       order => '20',
       content => inline_template("K8S_VERSION=<%= @k8s_version %>
-KUBELET_VERSION=<%= kube_quay_version %>
+KUBELET_VERSION=<%= @kubelet_version %>
 ")
   }
 
@@ -54,10 +66,45 @@ KUBELET_VERSION=<%= kube_quay_version %>
     unless => "grep v${k8s_version} ${_kubectl_path}",
   }
 
-  systemd::unit { "kubelet.service":
-    content => template("epflsti_coreos/kubelet.service.erb"),
+  systemd::docker_service { "kubelet":
+    description => "Kubelet in a box (Docker)",
     enable => true,
     # Not started yet; see kubernetes/start_kubelet.pp
+    volumes => [ "/:/rootfs:ro",
+                 "/sys:/sys:ro",
+                 "/var/lib/docker:/var/lib/docker:rw",
+                 "/var/lib/kubelet:/var/lib/kubelet:rw",
+                 "/etc/kubernetes:/etc/kubernetes:ro",
+                 "/etc/kubernetes/cni:/etc/cni:ro",
+                 "/opt/cni/bin:/opt/cni/bin:ro",
+                 "/var/run:/var/run:rw",
+                 "/usr/sbin/modprobe:/usr/sbin/modprobe:ro",
+                 "/lib/modules:/lib/modules:ro",
+                 ],
+    net => "host",
+    pid => "host",
+    privileged => true,
+    image => "gcr.io/google_containers/hyperkube-amd64:v${kubelet_version}",
+    args => inline_template("/hyperkube kubelet --containerized <% -%>
+    \"--hostname-override=${::hostname}\" <% -%>
+    --api-servers=http://127.0.0.1:8080 <% -%>
+    --network-plugin=cni <% -%>
+    --network-plugin-dir=/etc/cni/net.d <% -%>
+    --cni-conf-dir=/etc/cni/net.d <% -%>
+    --cni-bin-dir=/opt/cni/bin <% -%>
+    <%- if @is_master -%>
+     --register-schedulable=false  <% -%>
+    <% else -%>
+     --register-node=/etc/kubernetes/manifests <% -%>
+     --kubeconfig=<%= @kubeconfig_path %> <% -%>
+     --tls-cert-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker.pem <% -%>
+     --tls-private-key-file=/etc/kubernetes/ssl/<%= @fqdn %>-worker-key.pem <% -%>
+    <%- end -%>
+     --allow-privileged=true <% -%>
+     --pod-manifest-path=/etc/kubernetes/manifests <% -%>
+     --hostname-override=<%= @hostname -%>
+     --cluster-dns=<%= @dns_vip -%>
+     --cluster-domain=cluster.local"),
     subscribe => File[$_calico_cni_conf]
   }
 
@@ -277,8 +324,8 @@ spec:
     "name": "calico",
     "type": "calico",
     "etcd_endpoints": "http://localhost:2379",
-    "log_level": "none",
-    "log_level_stderr": "info",
+    "log_level": "DEBUG",
+    "log_level_stderr": "DEBUG",
     "hostname": "<%= @hostname %>",
     "ipam": {
         "type": "calico-ipam",
@@ -289,8 +336,7 @@ spec:
         "type": "calico"
     },
     "policy": {
-        "type": "k8s",
-        "kubeconfig": "/etc/kubernetes/kubeconfig.yaml"
+        "type": "k8s"
     },
     "kubernetes": {
         "kubeconfig": "/etc/kubernetes/kubeconfig.yaml"

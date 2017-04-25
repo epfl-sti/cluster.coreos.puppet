@@ -225,7 +225,7 @@ ExecStart=/usr/bin/docker run --rm --name %n <% -%>
   <%- @volumes.each do |volume| -%>-v <%= volume %> <% end -%>
   <%- @env.each do |env| -%>-e \"<%= env %>\" <% end -%>
   <%= @image -%>
-  <%= @args || '' %>
+  <%= @args ? @args.gsub(/\n/, ' ') : '' %>
 
 <% if (! @_do_not_install) %>
 [Install]
