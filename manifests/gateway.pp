@@ -187,9 +187,11 @@ ExecStop=-/usr/bin/docker rm -f %p
     }
 
     # haproxy for ingress traffic
-    private::systemd::unit { "${::cluster_owner}.haproxy.service":
-      # Uses $::public_web_domain
-      content => template('epflsti_coreos/haproxy.service.erb'),
+    private::systemd::docker_service { "${::cluster_owner}.haproxy":
+      description => "Serves all Consul servers to the open Web with NO ACCESS CONTROL WHATSOEVER",
+      net => "host",
+      image => "ciscocloud/haproxy-consul",
+      env => [ "HAPROXY_DOMAIN=${::public_web_domain}" ],
       start => $_enable_haproxy,
       enable => $_enable_haproxy
     }

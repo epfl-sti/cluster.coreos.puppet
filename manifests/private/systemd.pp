@@ -176,4 +176,64 @@ class epflsti_coreos::private::systemd {
       }
     }  # end if $::lifecycle_stage != "production"
   }    # define unit
+
+  define docker_service(
+    $description = "A Docker service",
+    $args = "",
+    $ensure = undef,
+    $enable = undef,
+    $start = undef,
+    $mask = undef,
+    $image = undef,
+    $volumes = [],
+    $env = [],
+    $ports = [],
+    $after = [],  # docker.service is implicit
+    $requires = [],  # docker.service is implicit
+    $privileged = undef,
+    $pid = undef,
+    $net = undef,
+    $docker_opts = [],
+    $restart_sec="60s") {
+      validate_string($image)
+      $_do_not_install = ($enable != undef and ! $enable)
+
+      systemd::unit { "${title}.service":
+        ensure => $ensure,
+        enable => $enable,
+        start => $start,
+        mask => $mask,
+        content => inline_template(
+";; This service is managed by Puppet as Systemd::Unit[\"<%= @title %>\"]
+[Unit]
+Description=<%= @description %>
+After=docker.service <%= @after.join ' ' %>
+Requires=docker.service <%= @requires.join ' ' %>
+
+[Service]
+RestartSec=<%= @restart_sec %>
+Restart=always
+ExecStartPre=-/usr/bin/docker rm -f %n
+ExecStop=/usr/bin/docker rm -f %n
+ExecStartPre=-/usr/bin/docker pull <%= @image %>
+ExecStart=/usr/bin/docker run --rm --name %n <% -%>
+  <%- if @privileged -%>--privileged <% end -%>
+  <%- if @net -%>--net=<%= @net %> <% end -%>
+  <%- if @pid -%>--pid=<%= @pid %> <% end -%>
+  <%- @docker_opts.each do |opt| -%><%= opt %> <% end -%>
+  <%- @ports.each do |port| -%>-p <%= port %> <% end -%>
+  <%- @volumes.each do |volume| -%>-v <%= volume %> <% end -%>
+  <%- @env.each do |env| -%>-e \"<%= env %>\" <% end -%>
+  <%= @image -%>
+  <%= @args || '' %>
+
+<% if (! @_do_not_install) %>
+[Install]
+WantedBy=multi-user.target
+<% end %>
+")
+      }
+    }
+  
+    
 }

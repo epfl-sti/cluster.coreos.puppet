@@ -94,8 +94,35 @@ class epflsti_coreos::private::puppet(
     install_sh_version => $::install_sh_version
   }, $extra_facts)
 
-  systemd::unit { "puppet.service":
-    content => template('epflsti_coreos/puppet.service.erb'),
+  systemd::docker_service { "puppet":
+    description => "Puppet agent in Docker",
+    net => "host",
+    privileged => true,
+    image => $puppet_docker_tag,
+    args => "agent --no-daemonize --logdest=console --environment=production",
+    volumes => [  
+                  "/:/opt/root",
+                  "/dev:/dev",
+                  "/etc/systemd:/etc/systemd",
+                  "/etc/ssh:/etc/ssh",
+                  "/etc/puppet:/etc/puppet",
+                  "/var/lib/puppet:/var/lib/puppet",
+                  "/var/run:/var/run",
+                  "/home/core:/home/core",
+                  "/etc/os-release:/etc/os-release:ro",
+                  "/etc/lsb-release:/etc/lsb-release:ro",
+                  "/etc/coreos:/etc/coreos:rw",
+                  "/run:/run:ro",
+                  "/usr/bin/systemctl:/usr/bin/systemctl:ro",
+                  "/usr/bin/fleetctl:/usr/bin/fleetctl:ro",
+                  "/lib64:/lib64:ro",
+                  "/lib/modules:/lib/modules:ro",
+                  "/usr/lib64/systemd:/usr/lib64/systemd",
+                  "/usr/lib/systemd:/usr/lib/systemd",
+                  "/sys/fs/cgroup:/sys/fs/cgroup:ro",
+                  ],
+    env => parsejson(inline_template(
+      '<%= @facts.map { |fact, value| "FACTER_#{fact}=#{value}" }.to_json %>')),
     start => $::lifecycle_stage ? {
       "production" => true,
       default => undef
