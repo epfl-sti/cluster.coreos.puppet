@@ -212,6 +212,7 @@ Requires=docker.service <%= @requires.join ' ' %>
 
 [Service]
 RestartSec=<%= @restart_sec %>
+TimeoutStartSec=300s<%# \"docker pull\" can take a while %>
 Restart=always
 ExecStartPre=-/usr/bin/docker rm -f %n
 ExecStop=/usr/bin/docker rm -f %n
