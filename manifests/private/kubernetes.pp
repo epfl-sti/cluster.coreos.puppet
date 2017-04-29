@@ -42,6 +42,7 @@ class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.6.2",
   $kubelet_version = "1.7.0-alpha.2",
   $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
+  $services_ip_range = $::kubernetes_services_ip_range,
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
@@ -127,7 +128,7 @@ spec:
     - --etcd-servers=http://${::ipaddress}:2379
     - --apiserver-count=${master_count}
     - --allow-privileged=true
-    - --service-cluster-ip-range=192.168.12.0/24
+    - --service-cluster-ip-range=${services_ip_range}
     - --storage-backend=etcd2
     - --secure-port=443
     - --advertise-address=${::ipaddress}
