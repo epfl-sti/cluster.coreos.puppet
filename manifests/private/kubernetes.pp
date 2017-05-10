@@ -40,7 +40,7 @@
 
 class epflsti_coreos::private::kubernetes(
   $k8s_version = "1.6.2",
-  $kubelet_version = "1.7.0-alpha.2",
+  $kubelet_version = "1.7.0-alpha.3",
   $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
   $services_ip_range = $::kubernetes_services_ip_range,
   $rootpath = $::epflsti_coreos::private::params::rootpath
@@ -192,6 +192,7 @@ spec:
     - --kubeconfig=<%= @kubeconfig_path %>
 <%- end -%>
     - --proxy-mode=iptables
+    - --hostname-override=<%= @hostname %>
     securityContext:
       privileged: true
     volumeMounts:
