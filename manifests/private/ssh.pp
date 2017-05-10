@@ -71,9 +71,17 @@ class epflsti_coreos::private::ssh(
     key => $sshed25519key
   }
 
-  # Fetch all keys from all hosts!
+  file { "${rootpath}/etc/ssh/ssh_known_hosts":
+    mode => "0644"
+  }
+  # Fetch all keys from all hosts into /etc/ssh/ssh_known_hosts!
   # http://serverfault.com/a/391467/109290
   Sshkey <<| |>>
+  # Since /etc/ssh/ssh_known_hosts is kept up to date as per above,
+  # usefulness of ~/.ssh/known_hosts is transient at best
+  file { "${rootpath}/home/core/.ssh/known_hosts":
+    ensure => "absent"
+  }
 
   # Used by template("epflsti_coreos/shosts.equiv.erb") below:
   $ssh_keys = query_resources(false, '@@Sshkey')
