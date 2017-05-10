@@ -219,11 +219,6 @@ spec:
       path: /etc/kubernetes/ssl
 <%- end -%>
 ")
-  } ~>  # static_manifest "kube-proxy"
-  exec { "reload kubelet after updating kube-proxy":
-    command => "systemctl restart kubelet",
-    path => $::path,
-    refreshonly => true
   }
 
   # Remote access to API servers
