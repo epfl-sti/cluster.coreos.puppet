@@ -16,7 +16,12 @@ fi
 
 # Add kubectl autocompletion
 #   -- see https://kubernetes.io/docs/tasks/tools/install-kubectl/#on-linux-using-bash
-source <(kubectl completion bash)
+# source <(kubectl completion bash)
+# bash_completion is not installed on CoreOs (sadly) - see 
+# https://www.binarysludge.com/2014/10/21/install-bash-completion-on-coreos/
+# for a fix
 
 alias kc="kubectl"
+alias kgp="kubectl get pods"
+alias kga="kubectl get all"
 
