@@ -35,6 +35,13 @@ TOOLBOX_BIND=\"--bind=/:/media/root --bind=/usr:/media/root/usr --bind=/run:/med
     content => template("epflsti_coreos/bash_history.erb")
   }
 
+  file { "/home/core/.bashrc":
+    owner => 500,
+    group => 500,
+    replace => true,
+    content => template("epflsti_coreos/bashrc.erb")
+  }
+  
   ensure_resource('file',
     ["${rootpath}/opt", "${rootpath}/opt/bin"],
     {'ensure' => 'directory' })
