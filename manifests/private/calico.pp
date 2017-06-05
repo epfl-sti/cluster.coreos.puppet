@@ -31,7 +31,7 @@
 # (see networking.pp)
 #
 class epflsti_coreos::private::calico (
-  $calicoctl_version = "1.1.3",
+  $calicoctl_version = "1.2.1",
   $cni_version = "1.6.2",
   $rootpath = $epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
