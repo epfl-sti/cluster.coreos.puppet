@@ -325,8 +325,8 @@ spec:
     "hostname": "<%= @hostname %>",
     "ipam": {
         "type": "calico-ipam",
-        "assign_ipv4": "false",
-        "assign_ipv6": "true"
+        "assign_ipv4": "true",
+        "assign_ipv6": "false" <%# Pending https://gitlab.epfl.ch/sti-it/ops.nemesis/issues/53 %>
     },
     "network": {
         "type": "calico"
