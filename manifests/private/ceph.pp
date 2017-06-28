@@ -44,7 +44,7 @@ class epflsti_coreos::private::ceph(
   $enabled = true,
   $rootpath = $epflsti_coreos::private::params::rootpath,
   $quorum_members = parseyaml($::quorum_members_yaml),
-  $is_osd = "2" == inline_template("<%= $::blockdevices.split(',').length %=>"),
+  $is_osd = "2" == inline_template("<%= @blockdevices.split(',').length %>"),
   $is_mon = undef
 ) inherits epflsti_coreos::private::params {
   if ($is_mon != undef) {
@@ -52,29 +52,12 @@ class epflsti_coreos::private::ceph(
   } else {
     $_is_mon = !empty(intersection([$::ipaddress], values($quorum_members)))
   }
-  $_ceph_mon_service = inline_template('#
-[Unit]
-Description=Ceph Monitor
-After=docker.service
 
-[Service]
-EnvironmentFile=/etc/environment
-ExecStartPre=-/usr/bin/docker kill %p.service
-ExecStartPre=/usr/bin/mkdir -p /etc/ceph /var/lib/ceph/mon
-ExecStart=/usr/bin/docker run --rm --name %p.service --net=host -v /var/lib/ceph:/var/lib/ceph -v /etc/ceph:/etc/ceph -e MON_IP=<%= @ipaddress %> -e CEPH_PRIVATE_NETWORK=<%= @ipv4_network %> -e CEPH_PUBLIC_NETWORK=<%= @ipv4_network %> ceph/daemon mon
-ExecStopPost=-/usr/bin/docker stop %p.service
-ExecStopPost=-/usr/bin/docker rm %p.service
-Restart=always
-RestartSec=120s
-TimeoutStartSec=120s
-TimeoutStopSec=15s
-
-')
+  file { ["${rootpath}/var/lib/ceph", "${rootpath}/etc/ceph"]:
+    ensure => "directory"
+  }
 
   $_ceph_config_file = "${rootpath}/etc/ceph/ceph.conf"
-  file { dirname($_ceph_config_file):
-    ensure => "directory"
-  } ->
   file { $_ceph_config_file:
       content => inline_template("[global]
 fsid = ${::ceph_fsid}
@@ -100,7 +83,23 @@ auth supported = none
     }
   } else {
     systemd::unit { $_mon_service_name:
-      content => $_ceph_mon_service,
+      content => inline_template('#
+[Unit]
+Description=Ceph Monitor
+After=docker.service
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill %p.service
+ExecStart=/usr/bin/docker run --rm --name %p.service --net=host -v /var/lib/ceph:/var/lib/ceph -v /etc/ceph:/etc/ceph -e MON_IP=<%= @ipaddress %> -e CEPH_PRIVATE_NETWORK=<%= @ipv4_network %> -e CEPH_PUBLIC_NETWORK=<%= @ipv4_network %> ceph/daemon mon
+ExecStopPost=-/usr/bin/docker stop %p.service
+ExecStopPost=-/usr/bin/docker rm %p.service
+Restart=always
+RestartSec=120s
+TimeoutStartSec=120s
+TimeoutStopSec=15s
+
+'),
       enable => $enabled,
       start => $enabled
     } ->
@@ -109,6 +108,54 @@ auth supported = none
       command => "systemctl restart ${_mon_service_name}",
       path => $::path,
       onlyif => "test -f ${_ceph_config_file} && systemctl is-active ${_mon_service_name}",
+      refreshonly => true
+    }
+  }
+
+  $_osd_service_name = "${::cluster_owner}.ceph_osd.service"
+  if ! $is_osd {
+    systemd::unit { $_osd_service_name:
+      ensure => "absent",
+      enable => false,
+      start => false
+    }
+  } else {
+    $_osd_journal = "/var/lib/ceph/journal/sdb"
+    file { ["${rootpath}/var/lib/ceph/journal"]:
+      ensure => "directory"
+    } ->
+    systemd::unit { $_osd_service_name:
+      content => inline_template('#
+[Unit]
+Description=Ceph OSD
+After=docker.service
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStartPre=-/usr/bin/docker kill %p.service
+ExecStartPre=-/usr/bin/docker run -v /dev:/dev -v /etc/ceph:/etc/ceph -v /var/lib/ceph:/var/lib/ceph --privileged  <%- -%>
+  --entrypoint /usr/sbin/ceph-disk ceph/daemon prepare /dev/sdb <%= @_osd_journal %>
+ExecStart=/usr/bin/docker run --rm --name %p.service --privileged --net=host -v /var/lib/ceph:/var/lib/ceph -v /etc/ceph:/etc/ceph <%- -%>
+  -e OSD_DEVICE=/dev/sdb <%- -%>
+  -e OSD_TYPE=activate <%- -%>
+  -e OSD_JOURNAL=<%= @_osd_journal -%>
+  ceph/daemon osd
+ExecStopPost=-/usr/bin/docker stop %p.service
+ExecStopPost=-/usr/bin/docker rm %p.service
+Restart=always
+RestartSec=120s
+TimeoutStartSec=120s
+TimeoutStopSec=15s
+
+'),
+      enable => $enabled,
+      start => $enabled
+    } ->
+    File[$_ceph_config_file] ~>
+    exec { "restart ${_osd_service_name}":
+      command => "systemctl restart ${_osd_service_name}",
+      path => $::path,
+      onlyif => "test -f ${_ceph_config_file} && systemctl is-active ${_osd_service_name}",
       refreshonly => true
     }
   }
