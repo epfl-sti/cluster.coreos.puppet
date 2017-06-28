@@ -9,9 +9,6 @@
 #
 # === Parameters:
 #
-# [*fsid*]
-#    The Ceph FSID. Should be set to the "ceph_fsid" of the first node in
-#    the cluster
 # [*enabled*]
 #    Whether to enable or disable Ceph. Set to false for one cycle of Puppet
 #    in order to "un-Ceph" a former quorum node.
@@ -32,24 +29,29 @@
 #   Whether we want an OSD on this node. By default, settle on nodes that
 #   have two physical disks.
 #
-# [*cluster_owner*]
-#   The prefix for all tasks run by the cluster owner
-#
 # === Global Variables:
 #
 # [*$::ipv4_network*]
 #   The CIDR network/netmask for the internal addresses of nodes
-#   and masquerading.
 #
 # [*$::ceph_fsid*]
 #   The FSID for the Ceph cluster.
+#
+# [*cluster_owner*]
+#   The prefix for all tasks run by the cluster owner
 #
 class epflsti_coreos::private::ceph(
   $enabled = true,
   $rootpath = $epflsti_coreos::private::params::rootpath,
   $quorum_members = parseyaml($::quorum_members_yaml),
-  $is_osd = "2" == inline_template("<%= $::blockdevices.split(',').length %=>")) inherits epflsti_coreos::private::params {
-  $_is_mon = !empty(intersection([$::ipaddress], values($quorum_members)))
+  $is_osd = "2" == inline_template("<%= $::blockdevices.split(',').length %=>"),
+  $is_mon = undef
+) inherits epflsti_coreos::private::params {
+  if ($is_mon != undef) {
+    $_is_mon = $is_mon
+  } else {
+    $_is_mon = !empty(intersection([$::ipaddress], values($quorum_members)))
+  }
   $_ceph_mon_service = inline_template('#
 [Unit]
 Description=Ceph Monitor
@@ -68,36 +70,46 @@ TimeoutStartSec=120s
 TimeoutStopSec=15s
 
 ')
-  if $_is_mon {
-    $_ceph_config_file = "${rootpath}/etc/ceph/ceph.conf"
-    $_service_name = "${::cluster_owner}.ceph_mon.service"
 
-    exec { "restart ${_service_name}":
-      command => "systemctl restart ${_service_name}",
-      path => $::path,
-      onlyif => "test -f ${_ceph_config_file} && systemctl is-active ${_service_name}",
-      refreshonly => true
+  $_ceph_config_file = "${rootpath}/etc/ceph/ceph.conf"
+  file { dirname($_ceph_config_file):
+    ensure => "directory"
+  } ->
+  file { $_ceph_config_file:
+      content => inline_template("[global]
+fsid = ${::ceph_fsid}
+mon initial members = <%= @quorum_members.keys.join(\" \") %>
+osd journal size = 100
+ms_bind_ipv6 = true
+mon host = <%= @quorum_members.values.join(\" \") %>
+public network = ${::ipv4_network}
+cluster network = ${::ipv4_network}
+auth cluster required = none
+auth service required = none
+auth client required = none
+auth supported = none
+")
+  }
+
+  $_mon_service_name = "${::cluster_owner}.ceph_mon.service"
+  if ! $_is_mon {
+    systemd::unit { $_mon_service_name:
+      ensure => "absent",
+      enable => false,
+      start => false
     }
-
-    ini_setting { "fsid in ceph.conf":
-      ensure  => present,
-      path    => $_ceph_config_file,
-      section => 'global',
-      setting => 'fsid',
-      value   => $::ceph_fsid
-    } ~> Exec["restart ${_service_name}"]
-    ini_setting { "mon initial members in ceph.conf":
-      ensure  => present,
-      path    => $_ceph_config_file,
-      section => 'global',
-      setting => 'mon initial members',
-      value   => inline_template("<%= @quorum_members.values.join(\" \") %>")
-    } ~> Exec["restart ${_service_name}"]
-
-    systemd::unit { $_service_name:
+  } else {
+    systemd::unit { $_mon_service_name:
       content => $_ceph_mon_service,
       enable => $enabled,
       start => $enabled
+    } ->
+    File[$_ceph_config_file] ~>
+    exec { "restart ${_mon_service_name}":
+      command => "systemctl restart ${_mon_service_name}",
+      path => $::path,
+      onlyif => "test -f ${_ceph_config_file} && systemctl is-active ${_mon_service_name}",
+      refreshonly => true
     }
   }
 }
