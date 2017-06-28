@@ -35,10 +35,13 @@ TOOLBOX_BIND=\"--bind=/:/media/root --bind=/usr:/media/root/usr --bind=/run:/med
     content => template("epflsti_coreos/bash_history.erb")
   }
 
-  file { "/home/core/.bashrc":
+  concat { "/home/core/.bashrc":
     owner => 500,
     group => 500,
-    replace => true,
+  }
+  concat::fragment { "main part of /home/core/.bashrc":
+    order => 0,
+    target => "/home/core/.bashrc",
     content => template("epflsti_coreos/bashrc.erb")
   }
   
@@ -49,5 +52,13 @@ TOOLBOX_BIND=\"--bind=/:/media/root --bind=/usr:/media/root/usr --bind=/run:/med
     mode => '0755',
     content => template("epflsti_coreos/fleetcheck.erb"),
     require => File["${rootpath}/opt/bin"]
-  }    
+  }
+}
+
+define epflsti_coreos::private::comfort::alias($value) {
+  concat::fragment { "alias ${type} in /home/core/.bashrc":
+    target => "/home/core/.bashrc",
+    order => 50,
+    content => "alias ${title}=\"${value}\""
+  }
 }

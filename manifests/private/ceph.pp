@@ -53,6 +53,15 @@ class epflsti_coreos::private::ceph(
     $_is_mon = !empty(intersection([$::ipaddress], values($quorum_members)))
   }
 
+  if ($_is_mon) {
+    $flavor = "mon"
+  } elsif ($is_osd) {
+    $flavor = "osd"
+  }
+  epflsti_coreos::private::comfort::alias {"ceph":
+    value => inline_template('docker exec -it <%= @cluster_owner %>.ceph_<%= @flavor %>.service ceph ')
+  }
+
   file { ["${rootpath}/var/lib/ceph", "${rootpath}/etc/ceph"]:
     ensure => "directory"
   }

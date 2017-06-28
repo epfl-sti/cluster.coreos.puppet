@@ -10,8 +10,8 @@ sudo docker rm -f puppet.service
 etcdctl cluster-health
 etcdctl member list
 docker exec -it <%= @cluster_owner %>.ceph_mon.service bash -c 'ceph --admin-daemon /var/run/ceph/ceph-*asok mon_status'
-docker exec -it <%= @cluster_owner %>.ceph_mon.service ceph health detail
-docker exec -it <%= @cluster_owner %>.ceph_mon.service ceph osd pool stats
+ceph health detail
+ceph osd pool stats
 fleetctl list-machines
 fleetctl list-units
 fleetctl list-unit-files
