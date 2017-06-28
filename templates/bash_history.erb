@@ -12,6 +12,8 @@ etcdctl member list
 docker exec -it <%= @cluster_owner %>.ceph_mon.service bash -c 'ceph --admin-daemon /var/run/ceph/ceph-*asok mon_status'
 ceph health detail
 ceph osd pool stats
+ceph osd pool ls
+ceph pg dump all
 fleetctl list-machines
 fleetctl list-units
 fleetctl list-unit-files
