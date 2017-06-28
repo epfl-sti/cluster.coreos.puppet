@@ -34,7 +34,11 @@ class epflsti_coreos::private::ipmi() {
     "X8DTT": {
       $rootUserNo = 3
     }
+    default: {
+      $rootUserNo = 2 
+    }
   }
+
   exec { "Create user root":
     command => "ipmitool user set name ${rootUserNo} root",
     path => $::path,
