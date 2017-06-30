@@ -130,9 +130,6 @@ TimeoutStopSec=15s
     }
   } else {
     $_osd_journal = "/var/lib/ceph/journal/sdb"
-    file { ["${rootpath}/var/lib/ceph/journal"]:
-      ensure => "directory"
-    } ->
     systemd::unit { $_osd_service_name:
       content => inline_template('#
 [Unit]
@@ -142,6 +139,7 @@ After=docker.service
 [Service]
 EnvironmentFile=/etc/environment
 ExecStartPre=-/usr/bin/docker kill %p.service
+ExecStartPre=-/usr/bin/mkdir -p /var/lib/ceph/journal
 ExecStartPre=-/usr/bin/docker run -v /dev:/dev -v /etc/ceph:/etc/ceph -v /var/lib/ceph:/var/lib/ceph --privileged  <%- -%>
   --entrypoint /usr/sbin/ceph-disk ceph/daemon prepare /dev/sdb <%= @_osd_journal %>
 ExecStart=/usr/bin/docker run --rm --name %p.service --privileged --net=host -v /var/lib/ceph:/var/lib/ceph -v /etc/ceph:/etc/ceph <%- -%>
