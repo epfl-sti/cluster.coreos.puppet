@@ -80,6 +80,11 @@ auth cluster required = none
 auth service required = none
 auth client required = none
 auth supported = none
+<%# http://docs.ceph.com/docs/jewel/rados/operations/placement-groups/#set-the-number-of-placement-groups -%>
+osd pool default pg num = 256
+osd pool default pgp num = 256
+<%# Uncomment the following to delete a pool: -%>
+<%# mon_allow_pool_delete = true %>
 ")
   }
 
