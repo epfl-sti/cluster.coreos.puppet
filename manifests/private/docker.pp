@@ -50,6 +50,8 @@ Wants=etcd2.service
 After=etcd2.service
 
 [Service]
+;; https://github.com/Ulexus/docker-ceph/issues/5
+LimitNOFILE=4096
 Environment=\"DOCKER_OPTS=--insecure-registry ${docker_registry_address} --registry-mirror=http://${docker_proxy_cache_address} --cluster-store=etcd://127.0.0.1:2379\"
 ",
     alias => "coreos-docker-private-registry-config"
