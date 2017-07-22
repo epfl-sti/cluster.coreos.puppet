@@ -1,4 +1,4 @@
-# Configure Kubernetes
+# Configure Kubernetes and Helm
 #
 # Based on https://coreos.com/kubernetes/docs/latest/deploy-master.html
 # and https://coreos.com/kubernetes/docs/latest/deploy-workers.html,
@@ -43,6 +43,8 @@ class epflsti_coreos::private::kubernetes(
   $kubelet_version = "1.7.0-alpha.3",
   $kubernetes_masters = keys(parseyaml($::quorum_members_yaml)),
   $services_ip_range = $::kubernetes_services_ip_range,
+  $helm_install_script_url = "https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get",
+  $helm_install_dir = "/opt/bin",
   $rootpath = $::epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   include ::epflsti_coreos::private::systemd
@@ -363,5 +365,12 @@ spec:
         ensure => "absent"
       }
     }
+  }
+
+  # Install Helm - https://github.com/kubernetes/helm/blob/master/docs/install.md
+  exec { "Install Helm":
+    command => "curl ${helm_install_script_url} | sed 's/tar xf/tar zxf/' | HELM_INSTALL_DIR=${rootpath}/${helm_install_dir} PATH=${rootpath}/${helm_install_dir}:\$PATH sh -x",
+    path => $::path,
+    creates => "${rootpath}/${helm_install_dir}/helm"
   }
 }
