@@ -9,15 +9,24 @@
 #
 # === Parameters:
 #
+# [*enabled*]
+#   Whether this node hosts a Consul quorum member or agent
+#
+# [*datacenter*]
+#   The datacenter name (passed as --datacenter to consul)
+#
+# [*consul_version*]
+#    The version of the consul agent to run
+#  
+# [*consulcli_url*]
+#    Where to download the consul-cli command from
+#  
 # [*quorum_members*]
 #   A YAML-encoded dict associating quorum member names with their
 #   IP address.
 #
-# [*enabled*]
-#    Whether to enable or disable Consul
-#
-# [*consulcli_url*]
-#    Where to download the consul-cli command from
+# [*recursors*]
+#    List of DNS servers to forward queries to (if outside of .consul domain)
 #
 # [*rootpath*]
 #    Where in the Puppet-agent Docker container, the host root is
@@ -25,9 +34,12 @@
 #
 class epflsti_coreos::private::consul(
   $enabled = true,
+  $datacenter = $::datacenter_short_name,
+  $consul_version = "0.9.0",
   $consulcli_url = "https://github.com/CiscoCloud/consul-cli/releases/download/v0.3.1/consul-cli_0.3.1_linux_amd64.tar.gz",
-  $rootpath = $epflsti_coreos::private::params::rootpath,
-  $quorum_members = parseyaml($::quorum_members_yaml)
+  $quorum_members = parseyaml($::quorum_members_yaml),
+  $recursors = parseyaml($::dns_servers_yaml),
+  $rootpath = $epflsti_coreos::private::params::rootpath
 ) inherits epflsti_coreos::private::params {
   $_is_member = !empty(intersection([$::ipaddress], values($quorum_members)))
   $_consul_service = inline_template("#
@@ -38,16 +50,21 @@ class epflsti_coreos::private::consul(
 Description=Run consul on each node
 
 [Service]
-ExecStart=/usr/bin/docker run --rm --name=%p --net=host \
-    consul agent \
+ExecStartPre=/usr/bin/docker pull consul:<%= @consul_version %>
+ExecStart=/usr/bin/docker run --rm --name=%p.service --net=host \
+    -e CONSUL_ALLOW_PRIVILEGED_PORTS=true \
+    consul:<%= @consul_version %> agent \
+    -datacenter=<%= @datacenter %> \
     -client :: \
+    -bind=<%= @ipaddress %> -dns-port 53 \
     <%if @_is_member %> -ui -server -bootstrap-expect=2 <% end %> \
     <% @quorum_members.each do |hostname, ip| -%>
     -join <%= ip %> \
     <% end -%>
-    -bind=<%= @ipaddress %>  -datacenter=ne
-ExecStop=-/usr/bin/docker rm -f %p
-
+    <% @recursors.each do |recursor| -%>
+    -recursor <%= recursor %> \
+    <% end %>
+ExecStop=-/usr/bin/docker rm -f %p.service
 ")
   systemd::unit { "stiitops.consul.service":
     content => $_consul_service,
