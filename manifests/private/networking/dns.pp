@@ -1,41 +1,40 @@
-# DNS client and server setup
+# DNS and /etc/hosts setup
 #
-# We configure all nodes' resolv.conf to use a quorum of dead-simple
-# DNS servers (we use unbound: https://www.unbound.net/)
+# Each node is assumed to be running a DNS server on port 53 (e.g. Consul)
+#
+# In order for workloads (Docker) to be able to reach it, we want
+# to use the host's IP address, not 127.0.0.1 in resolv.conf
 #
 # === Parameters:
 #
-# [*cluster_owner*]
-#   The prefix for all tasks run by the cluster owner
-#
-# [*dns_servers*]
-#   A hash associating host names to IP addresses where the
-#   redundant DNS servers of the cluster should run.
+# [*rootpath*]
+#    Where in the Puppet-agent Docker container, the host root is
+#    mounted
 #
 class epflsti_coreos::private::networking::dns(
-  $dns_servers = parseyaml($::quorum_members_yaml),
-  $cluster_owner = $::cluster_owner
-  ) {
+  $rootpath = $::epflsti_coreos::private::params::rootpath
+) inherits epflsti_coreos::private::params {
+  # Note: the file class with content cannot be used here, as it tries
+  # to perform an atomic update with rename(2). This is unfortunately
+  # not possible with the host's /etc/resolv.conf, which bind-mounted
+  # into every Docker container. (For now, this is not a problem for
+  # /etc/hosts.)
+  file_line { "nameserver in ${rootpath}/etc/resolv.conf":
+    path => "${rootpath}/etc/resolv.conf",
+    line => inline_template("nameserver <%= @ipaddress %>"),
+    match => "^nameserver"
+  }
 
-  $_is_dns_server = !(! $dns_servers[$::fqdn])
-
-  file { "${rootpath}/etc/resolv.conf":
-    ensure => "file",
+  $_all_hosts = query_facts('Class[epflsti_coreos]', ['ipaddress'])
+  file { "${rootpath}/etc/hosts":
     content => inline_template('# Managed by Puppet, DO NOT EDIT
 
-nameserver <%= @dns_vip %><%# TODO: put $dns_servers here once they work %>
-search <%= @domain %> <%= @domain.split(".").slice(-2, +100).join(".") %>
+127.0.0.1	localhost
+::1		localhost
+
+<% @_all_hosts.sort.map do |hostname, facts| -%>
+<%= facts["ipaddress"] %> <%= hostname %> <%= hostname.split(".")[0] %>
+<% end %>
 ')
   }
-
-  if ($_is_dns_server) {
-    ::epflsti_coreos::private::docker::image { "cluster.unbound":
-      Dockerfile => "FROM alpine:latest
-RUN apk update; apk add unbound
-"
-    } ->
-    ::epflsti_coreos::private::systemd::unit { "${cluster_owner}.unbound-dns.service":
-    }
-  }
 }
-  

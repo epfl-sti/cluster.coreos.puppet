@@ -81,15 +81,7 @@ class epflsti_coreos::private::networking(
   file { "${rootpath}/etc/hostname":
     content => "${::fqdn}\n"
   }
-
-  file { "${rootpath}/etc/resolv.conf":
-    ensure => "file",
-    content => inline_template('# Managed by Puppet, DO NOT EDIT
-
-nameserver <%= @dns_vip %>
-search <%= @domain %> <%= @domain.split(".").slice(-2, +100).join(".") %>
-')
-  }
+  class {"::epflsti_coreos::private::networking::dns": }
 
   $internal_interfaces = delete(grep(split($::interfaces, ','), '^(en|eth)'), ["ethbr4", $::epflsti_coreos::gateway::external_interface])
   validate_bool(size($internal_interfaces) > 0)
